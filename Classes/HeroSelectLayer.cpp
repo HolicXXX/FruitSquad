@@ -1,42 +1,28 @@
-#include "HeroHallLayer.h"
+#include "HeroSelectLayer.h"
+#include "LoadingScene.h"
+#include "LevelSelectedScene.h"
 USING_NS_CC;
 
-HeroHall* HeroHall::create()
+HeroSelect* HeroSelect::create()
 {
-	auto hh = new HeroHall();
-	if (hh && hh->init())
+	auto hs = new HeroSelect();
+	if (hs && hs->init())
 	{
-		hh->autorelease();
-		return hh;
+		hs->autorelease();
+		return hs;
 	}
-	CC_SAFE_DELETE(hh);
+	CC_SAFE_DELETE(hs);
 	return nullptr;
 }
 
-bool HeroHall::init()
+bool HeroSelect::init()
 {
 	if (!Layer::init())
 	{
 		return false;
 	}
 	auto size = Director::getInstance()->getVisibleSize();
-	m_focus = nullptr;
-	m_propertyBox = nullptr;
-	this->setPosition(Vec2(0, size.height));
-
 	initBackGround();
-	//title
-	auto title = Node::create();
-	{
-		auto bg = Sprite::create("levelselectscene/herohall/title.png");
-		bg->setTag(1);
-		title->addChild(bg);
-		auto label = Sprite::create("levelselectscene/herohall/text_title.png");
-		label->setTag(2);
-		title->addChild(label);
-	}
-	title->setPosition(size.width / 3, size.height - title->getChildByTag(1)->getContentSize().height);
-	this->addChild(title);
 	//return button
 	{
 		m_returnButton = Sprite::create("levelselectscene/herohall/button_return_normal.png");
@@ -72,26 +58,20 @@ bool HeroHall::init()
 			{
 				m_returnButton->setTexture("levelselectscene/herohall/button_return_normal.png");
 				//callback
-				auto seq = Sequence::create(
-					MoveBy::create(0.5f, Vec2(0, size.height)),
-					nullptr);
-				this->runAction(seq);
+				auto scene = Scene::create();
+				auto load = LoadingScene::create();
+				load->bindNextSceneCallBack(LevelSelectedScene::createScene);
+				scene->addChild(load);
+				Director::getInstance()->replaceScene(TransitionMoveInL::create(0.5f, scene));
 			}
 		};
 		_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, m_returnButton);
 		this->addChild(m_returnButton);
 	}
-	//init hero icon
-	initHeroIcon();
-	setPropertyBox();
-	//model
-	{
-		m_heroModel = HeroModel::create(m_focus->getTag());
-		m_heroModel->setPosition(size.width / 5 * 4, size.height / 2);
-		this->addChild(m_heroModel);
-	}
+	initTitle();
+	initItemBG();
 
-	initUI();
+	initHeroIcon();
 
 	//set swallow
 	auto lis = EventListenerTouchOneByOne::create();
@@ -110,25 +90,7 @@ bool HeroHall::init()
 	return true;
 }
 
-void HeroHall::setPropertyBox()
-{
-	auto size = Director::getInstance()->getVisibleSize();
-	if (!m_propertyBox)
-	{
-		m_propertyBox = Node::create();
-		{
-			auto bg = Sprite::create("levelselectscene/herohall/property_box.png");
-			bg->setTag(1);
-			m_propertyBox->addChild(bg);
-			//base on data,add property bar and label
-		}
-		m_propertyBox->setPosition(m_clipping->getPositionX() + 122 * 2 + 20, size.height / 5);
-		this->addChild(m_propertyBox);
-	}
-	//base on data,reset property bar and label
-}
-
-void HeroHall::initHeroIcon()
+void HeroSelect::initHeroIcon()
 {
 	auto size = Director::getInstance()->getVisibleSize();
 	//data
@@ -177,17 +139,17 @@ void HeroHall::initHeroIcon()
 		{
 			state = "disable";
 		}
-		auto icon = Sprite::create(StringUtils::format("levelselectscene/herohall/hero/%s_%s.png", m_firstPageStr[i].c_str(),state.c_str()));
+		auto icon = Sprite::create(StringUtils::format("gamescene/hero/%s_%s.png", m_firstPageStr[i].c_str(), state.c_str()));
 		icon->setTag(1);
 		node->addChild(icon);
-		auto eff = Sprite::create("levelselectscene/herohall/selected_effect.png");
+		auto eff = Sprite::create("gamescene/selected_effect.png");
 		eff->setTag(2);
 		eff->setVisible(false);
 		node->addChild(eff);
 		auto x = i % 4;
 		auto y = i / 4;
 		auto iconSize = icon->getContentSize();
-		node->setPosition(iconSize.width / 2 + 5 + x * (iconSize.width + 10), 0- (iconSize.height / 2 + 5 + y * (iconSize.height + 10)));
+		node->setPosition(iconSize.width / 2 + 5 + x * (iconSize.width + 10), 0 - (iconSize.height / 2 + 5 + y * (iconSize.height + 10)));
 		node->setTag(i);
 		m_firstPage.pushBack(node);
 		m_firstPageOrigin->addChild(node);
@@ -207,10 +169,10 @@ void HeroHall::initHeroIcon()
 		{
 			state = "disable";
 		}
-		auto icon = Sprite::create(StringUtils::format("levelselectscene/herohall/hero/%s_%s.png", m_secondPageStr[i - 8].c_str(), state.c_str()));
+		auto icon = Sprite::create(StringUtils::format("gamescene/hero/%s_%s.png", m_secondPageStr[i - 8].c_str(), state.c_str()));
 		icon->setTag(1);
 		node->addChild(icon);
-		auto eff = Sprite::create("levelselectscene/herohall/selected_effect.png");
+		auto eff = Sprite::create("gamescene/selected_effect.png");
 		eff->setTag(2);
 		eff->setVisible(false);
 		node->addChild(eff);
@@ -221,7 +183,7 @@ void HeroHall::initHeroIcon()
 		node->setTag(i);
 		if (i - 8 == 3 || i - 8 == 4)
 		{
-			auto lock = Sprite::create("levelselectscene/herohall/hero/lock.png");
+			auto lock = Sprite::create("gamescene/hero/lock.png");
 			lock->setTag(3);
 			lock->setPosition(icon->getContentSize().width / 2 - lock->getContentSize().width / 2,
 				0 - icon->getContentSize().height / 2 + lock->getContentSize().height / 2);
@@ -298,7 +260,7 @@ void HeroHall::initHeroIcon()
 					m_focus->getChildByTag(2)->setVisible(true);
 					//callback
 					CCLOG("hero icon callback");
-					m_heroModel->resetHeroIndex(p1->getTag());
+					//list add
 					break;
 				}
 			}
@@ -324,20 +286,20 @@ void HeroHall::initHeroIcon()
 					m_focus->getChildByTag(2)->setVisible(true);
 					//callback
 					CCLOG("hero icon callback");
-					m_heroModel->resetHeroIndex(p2->getTag());
+					//list add
 					break;
 				}
 			}
 		}
-		
-		
+
+
 	};
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, m_clipping);
 	//init left and right button
-	m_leftButton = Sprite::create("levelselectscene/herohall/button_left_normal.png");
+	m_leftButton = Sprite::create("gamescene/button_left_normal.png");
 	m_leftButton->setPosition(m_clipping->getPositionX() - m_leftButton->getContentSize().width / 2, m_clipping->getPositionY() + (122 * 2 + 20) / 2);
 	this->addChild(m_leftButton);
-	m_rightButton = Sprite::create("levelselectscene/herohall/button_right_normal.png");
+	m_rightButton = Sprite::create("gamescene/button_right_normal.png");
 	m_rightButton->setPosition(m_clipping->getPositionX() + 122 * 4 + 40 + m_rightButton->getContentSize().width / 2, m_clipping->getPositionY() + (122 * 2 + 20) / 2);
 	this->addChild(m_rightButton);
 	//button listener
@@ -364,7 +326,7 @@ void HeroHall::initHeroIcon()
 				m_secondPageOrigin->runAction(MoveBy::create(0.25f, Vec2(122 * 4 + 40, 0)));
 			}
 		}
-		m_leftButton->setTexture("levelselectscene/herohall/button_left_normal.png");
+		m_leftButton->setTexture("gamescene/button_left_normal.png");
 	};
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(leftLis, m_leftButton);
 	auto rightLis = EventListenerTouchOneByOne::create();
@@ -390,98 +352,57 @@ void HeroHall::initHeroIcon()
 				m_secondPageOrigin->runAction(MoveBy::create(0.25f, Vec2(-(122 * 4 + 40), 0)));
 			}
 		}
-		m_rightButton->setTexture("levelselectscene/herohall/button_right_normal.png");
+		m_rightButton->setTexture("gamescene/button_right_normal.png");
 	};
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(rightLis, m_rightButton);
 }
 
-void HeroHall::update(float dt)
+void HeroSelect::update(float dt)
 {
 	bgUpdate(dt);
 }
 
-void HeroHall::initUI()
+void HeroSelect::initItemBG()
 {
 	auto size = Director::getInstance()->getVisibleSize();
-	//init gems
-	m_gems = Node::create();
-	{
-		auto bg = Sprite::create("levelselectscene/herohall/gems_number_bg.png");
-		bg->setTag(1);
-		m_gems->addChild(bg);
-		//add label
-		auto add = Sprite::create("levelselectscene/herohall/button_add_normal.png");
-		add->setTag(3);
-		add->setPosition(bg->getContentSize().width / 2 - 25, 0);
-		auto lis = EventListenerTouchOneByOne::create();
-		lis->setSwallowTouches(true);
-		lis->onTouchBegan = [this, add](Touch* t, Event* e)->bool{
-			auto pos = add->convertTouchToNodeSpace(t);
-			auto rc = Rect{ Vec2::ZERO, add->getContentSize() };
-			if (rc.containsPoint(pos))
-			{
-				add->setTexture("levelselectscene/herohall/button_add_selected.png");
-				return true;
-			}
-			return false;
-		};
-		lis->onTouchEnded = [this, add](Touch* t, Event* e)->void{
-			auto pos = add->convertTouchToNodeSpace(t);
-			auto rc = Rect{ Vec2::ZERO, add->getContentSize() };
-			if (rc.containsPoint(pos))
-			{
-				add->setTexture("levelselectscene/herohall/button_add_normal.png");
-				//callback
-				CCLOG("gems add callback");
-			}
-		};
-		_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, add);
-		m_gems->addChild(add);
-	}
-	m_gems->setPosition(size.width - m_gems->getChildByTag(1)->getContentSize().width / 2 - 50,
-		size.height - m_gems->getChildByTag(1)->getContentSize().height);
-	this->addChild(m_gems);
-	//init fruits
-	m_fruits = Node::create();
-	{
-		auto bg = Sprite::create("levelselectscene/herohall/fruit_number_bg.png");
-		bg->setTag(1);
-		m_fruits->addChild(bg);
-		//add label
-		auto add = Sprite::create("levelselectscene/herohall/button_add_normal.png");
-		add->setTag(3);
-		add->setPosition(bg->getContentSize().width / 2 - 25, 0);
-		auto lis = EventListenerTouchOneByOne::create();
-		lis->setSwallowTouches(true);
-		lis->onTouchBegan = [this, add](Touch* t, Event* e)->bool{
-			auto pos = add->convertTouchToNodeSpace(t);
-			auto rc = Rect{ Vec2::ZERO, add->getContentSize() };
-			if (rc.containsPoint(pos))
-			{
-				add->setTexture("levelselectscene/herohall/button_add_selected.png");
-				return true;
-			}
-			return false;
-		};
-		lis->onTouchEnded = [this, add](Touch* t, Event* e)->void{
-			auto pos = add->convertTouchToNodeSpace(t);
-			auto rc = Rect{ Vec2::ZERO, add->getContentSize() };
-			if (rc.containsPoint(pos))
-			{
-				add->setTexture("levelselectscene/herohall/button_add_normal.png");
-				//callback
-				CCLOG("fruits add callback");
-			}
-		};
-		_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, add);
-		m_fruits->addChild(add);
-	}
-	m_fruits->setPosition(size.width - m_gems->getChildByTag(1)->getContentSize().width / 2 - 50 - m_fruits->getChildByTag(1)->getContentSize().width - 50,
-		size.height - m_fruits->getChildByTag(1)->getContentSize().height);
-	this->addChild(m_fruits);
+	m_itemSelect = Node::create();
+	//bg
+	auto bg = Sprite::create("gamescene/skill_preview.png");
+	bg->setTag(1);
+	m_itemSelect->addChild(bg);
+	//items
+
+	//preview button
+	m_previewButton = Sprite::create("gamescene/preview.png");
+	m_previewButton->setPosition(bg->getContentSize().width / 4, bg->getContentSize().height / 3);
+	m_previewButton->setTag(2);
+	m_itemSelect->addChild(m_previewButton);
+
+	m_itemSelect->setPosition(size.width / 5 * 4, size.height / 2);
+	this->addChild(m_itemSelect);
 }
 
-void HeroHall::initBackGround()
+void HeroSelect::initTitle()
+{
+	auto size = Director::getInstance()->getVisibleSize();
+	m_title = Node::create();
+	//bg
+	auto bg = Sprite::create("gamescene/title.png");
+	bg->setTag(1);
+	m_title->addChild(bg);
+
+	//level label
+	auto level = Sprite::create("gamescene/level_label.png");
+	level->setPosition(0 - bg->getContentSize().width / 10, 0);
+	level->setTag(2);
+	m_title->addChild(level);
+	//number label
+
+	m_title->setPosition(size.width / 2, size.height - bg->getContentSize().height);
+	this->addChild(m_title);
+}
+
+void HeroSelect::initBackGround()
 {
 	//background
 	auto background1 = Sprite::create("loadingscene/background.png");
@@ -522,7 +443,7 @@ void HeroHall::initBackGround()
 	this->addChild(m_wcloud4);
 }
 
-void HeroHall::bgUpdate(float dt)
+void HeroSelect::bgUpdate(float dt)
 {
 	m_bcloud1->setPositionX(m_bcloud1->getPositionX() - 5);
 	m_bcloud2->setPositionX(m_bcloud2->getPositionX() - 5);

@@ -1,6 +1,7 @@
 #include "AppDelegate.h"
 #include <ctime>
 #include "StartScene.h"
+#include "GameScene.h"
 
 USING_NS_CC;
 
@@ -41,7 +42,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto glview = director->getOpenGLView();
     if(!glview) {
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC) || (CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        glview = GLViewImpl::createWithRect("Test", Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+        glview = GLViewImpl::createWithRect("FruitSquad", Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
 #else
         glview = GLViewImpl::create("Test");
 #endif
@@ -78,7 +79,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
 	srand(time(0));
 	CCRANDOM_0_1();
 
-	auto scene = StartScene::createScene();
+	auto scene = GameScene::createScene();
 
     director->runWithScene(scene);
 

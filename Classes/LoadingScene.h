@@ -21,11 +21,12 @@ private:
 	cocos2d::Sprite* m_wcloud2;
 	cocos2d::Sprite* m_wcloud3;
 	cocos2d::Sprite* m_wcloud4;
-
 	cocos2d::Sprite* m_bcloud1;
 	cocos2d::Sprite* m_bcloud2;
 	cocos2d::Sprite* m_bcloud3;
 	cocos2d::Sprite* m_bcloud4;
+	void initBackGround();
+	void bgUpdate(float dt);
 };
 
 

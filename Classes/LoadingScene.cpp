@@ -24,13 +24,7 @@ bool LoadingScene::init()
 	m_callback = nullptr;
 	auto size = Director::getInstance()->getVisibleSize();
 
-	//background
-	auto background1 = Sprite::create("loadingscene/background.png");
-	background1->setPosition(background1->getContentSize() / 2);
-	this->addChild(background1);
-	auto background2 = Sprite::create("loadingscene/background.png");
-	background2->setPosition(background1->getContentSize().width + background2->getContentSize().width / 2, background2->getContentSize().height / 2);
-	this->addChild(background2);
+	initBackGround();
 	//hero
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("loadingscene/loading0.png", "loadingscene/loading0.plist", "loadingscene/loading.ExportJson");
 	auto hero = Armature::create("loading");
@@ -41,36 +35,6 @@ bool LoadingScene::init()
 	m_text = Label::createWithBMFont("fonts/loading_text.fnt", "Loading");
 	m_text->setPosition(size / 2);
 	this->addChild(m_text);
-	//cloud
-	m_bcloud1 = Sprite::create("loadingscene/cloud_blue.png");
-	m_bcloud1->setPosition(m_bcloud1->getContentSize() / 2);
-	this->addChild(m_bcloud1);
-	m_bcloud2 = Sprite::create("loadingscene/cloud_blue.png");
-	m_bcloud2->setFlippedX(true);
-	m_bcloud2->setPosition(m_bcloud1->getPosition() + Vec2(m_bcloud2->getContentSize().width, 0));
-	this->addChild(m_bcloud2);
-	m_bcloud3 = Sprite::create("loadingscene/cloud_blue.png");
-	m_bcloud3->setPosition(m_bcloud2->getPosition() + Vec2(m_bcloud3->getContentSize().width, 0));
-	this->addChild(m_bcloud3);
-	m_bcloud4 = Sprite::create("loadingscene/cloud_blue.png");
-	m_bcloud4->setFlippedX(true);
-	m_bcloud4->setPosition(m_bcloud3->getPosition() + Vec2(m_bcloud4->getContentSize().width, 0));
-	this->addChild(m_bcloud4);
-
-	m_wcloud1 = Sprite::create("loadingscene/cloud_white.png");
-	m_wcloud1->setPosition(m_wcloud1->getContentSize() / 2);
-	this->addChild(m_wcloud1);
-	m_wcloud2 = Sprite::create("loadingscene/cloud_white.png");
-	m_wcloud2->setFlippedX(true);
-	m_wcloud2->setPosition(m_wcloud1->getPosition() + Vec2(m_wcloud2->getContentSize().width, 0));
-	this->addChild(m_wcloud2);
-	m_wcloud3 = Sprite::create("loadingscene/cloud_white.png");
-	m_wcloud3->setPosition(m_wcloud2->getPosition() + Vec2(m_wcloud3->getContentSize().width, 0));
-	this->addChild(m_wcloud3);
-	m_wcloud4 = Sprite::create("loadingscene/cloud_white.png");
-	m_wcloud4->setFlippedX(true);
-	m_wcloud4->setPosition(m_wcloud3->getPosition() + Vec2(m_wcloud4->getContentSize().width, 0));
-	this->addChild(m_wcloud4);
 	//random delay time
 	m_delay = CCRANDOM_0_1() * 3 + 1;
 
@@ -108,6 +72,52 @@ void LoadingScene::update(float dt)
 		}
 		m_text->setString(str);
 	}
+	bgUpdate(dt);
+}
+
+void LoadingScene::initBackGround()
+{
+	//background
+	auto background1 = Sprite::create("loadingscene/background.png");
+	background1->setPosition(background1->getContentSize() / 2);
+	this->addChild(background1);
+	auto background2 = Sprite::create("loadingscene/background.png");
+	background2->setPosition(background1->getContentSize().width + background2->getContentSize().width / 2, background2->getContentSize().height / 2);
+	this->addChild(background2);
+	//back cloud
+	m_bcloud1 = Sprite::create("loadingscene/cloud_blue.png");
+	m_bcloud1->setPosition(m_bcloud1->getContentSize() / 2);
+	this->addChild(m_bcloud1);
+	m_bcloud2 = Sprite::create("loadingscene/cloud_blue.png");
+	m_bcloud2->setFlippedX(true);
+	m_bcloud2->setPosition(m_bcloud1->getPosition() + Vec2(m_bcloud2->getContentSize().width, 0));
+	this->addChild(m_bcloud2);
+	m_bcloud3 = Sprite::create("loadingscene/cloud_blue.png");
+	m_bcloud3->setPosition(m_bcloud2->getPosition() + Vec2(m_bcloud3->getContentSize().width, 0));
+	this->addChild(m_bcloud3);
+	m_bcloud4 = Sprite::create("loadingscene/cloud_blue.png");
+	m_bcloud4->setFlippedX(true);
+	m_bcloud4->setPosition(m_bcloud3->getPosition() + Vec2(m_bcloud4->getContentSize().width, 0));
+	this->addChild(m_bcloud4);
+
+	m_wcloud1 = Sprite::create("loadingscene/cloud_white.png");
+	m_wcloud1->setPosition(m_wcloud1->getContentSize() / 2);
+	this->addChild(m_wcloud1);
+	m_wcloud2 = Sprite::create("loadingscene/cloud_white.png");
+	m_wcloud2->setFlippedX(true);
+	m_wcloud2->setPosition(m_wcloud1->getPosition() + Vec2(m_wcloud2->getContentSize().width, 0));
+	this->addChild(m_wcloud2);
+	m_wcloud3 = Sprite::create("loadingscene/cloud_white.png");
+	m_wcloud3->setPosition(m_wcloud2->getPosition() + Vec2(m_wcloud3->getContentSize().width, 0));
+	this->addChild(m_wcloud3);
+	m_wcloud4 = Sprite::create("loadingscene/cloud_white.png");
+	m_wcloud4->setFlippedX(true);
+	m_wcloud4->setPosition(m_wcloud3->getPosition() + Vec2(m_wcloud4->getContentSize().width, 0));
+	this->addChild(m_wcloud4);
+}
+
+void LoadingScene::bgUpdate(float dt)
+{
 	m_bcloud1->setPositionX(m_bcloud1->getPositionX() - 5);
 	m_bcloud2->setPositionX(m_bcloud2->getPositionX() - 5);
 	m_bcloud3->setPositionX(m_bcloud3->getPositionX() - 5);
