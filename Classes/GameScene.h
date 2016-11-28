@@ -13,11 +13,18 @@ public:
 
 	virtual void update(float dt);
 private:
-	HeroSelect* m_heroSelectLayer;
-	cocos2d::TMXTiledMap* m_map;
+	cocos2d::Node* m_portal;
 
 	void initMap();
+	cocos2d::TMXTiledMap* m_map;
+
+	HeroSelect* m_heroSelectLayer;
 	void initHeroSelect();
+
+	cocos2d::Layer* m_midLayer;
+	void initSelectMidLayer();
+
+	void startCallBack();
 };
 
 

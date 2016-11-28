@@ -208,8 +208,15 @@ void LevelSelectedScene::initLevelButton()
 					auto buttonRc = Rect{ Vec2(-b1->getButtonSize().width / 2, -b1->getButtonSize().height / 2), b1->getButtonSize() };
 					if (buttonRc.containsPoint(pos))
 					{
-						b1->setSelected();
-						m_focus = b1;
+						if (b1->getState() != ButtonState::DISABLE)
+						{
+							if (m_focus)
+							{
+								m_focus->setNormal();
+							}
+							b1->setSelected();
+							m_focus = b1;
+						}
 						break;
 					}
 				}
@@ -222,12 +229,15 @@ void LevelSelectedScene::initLevelButton()
 					auto buttonRc = Rect{ Vec2(-b2->getButtonSize().width / 2, -b2->getButtonSize().height / 2), b2->getButtonSize() };
 					if (buttonRc.containsPoint(pos))
 					{
-						b2->setSelected();
-						if (m_focus)
+						if (b2->getState() != ButtonState::DISABLE)
 						{
-							m_focus->setNormal();
+							if (m_focus)
+							{
+								m_focus->setNormal();
+							}
+							b2->setSelected();
+							m_focus = b2;
 						}
-						m_focus = b2;
 						break;
 					}
 				}
@@ -302,11 +312,12 @@ void LevelSelectedScene::initLevelButton()
 				auto buttonRc = Rect{ Vec2(-buttonSize.width / 2, -buttonSize.height / 2), buttonSize };
 				if (buttonRc.containsPoint(pos))
 				{
-					b1->setNormal();
-					//callback
-					CCLOG("button callback");
-					auto num = CCRANDOM_0_1() * 3 + 1;
-					b1->pass(num);
+					if (b1->getState() != ButtonState::DISABLE)
+					{
+						b1->setNormal();
+						m_focus = b1;
+						//callback
+					}
 					break;
 				}
 			}
@@ -320,18 +331,18 @@ void LevelSelectedScene::initLevelButton()
 				auto buttonRc = Rect{ Vec2(-buttonSize.width / 2, -buttonSize.height / 2), buttonSize };
 				if (buttonRc.containsPoint(pos))
 				{
-					b2->setNormal();
-					//callback
-					CCLOG("button callback");
-					auto num = CCRANDOM_0_1() * 3 + 1;
-					b2->pass(num);
+					if (b2->getState() != ButtonState::DISABLE)
+					{
+						b2->setNormal();
+						m_focus = b2;
+						//callback
+					}
 					break;
 				}
 			}
 		}
 	};
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, m_cliping);
-
 }
 
 void LevelSelectedScene::initUI()

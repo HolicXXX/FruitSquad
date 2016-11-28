@@ -21,6 +21,10 @@ bool LevelButton::init(int level)
 	}
 	m_level = level;
 	m_star = nullptr;
+	m_state = DISABLE;
+	m_textureStr.push_back("disable");
+	m_textureStr.push_back("able");
+	m_textureStr.push_back("pass");
 	//base on level and data to create button and label
 	{
 		m_button = Sprite::create("levelselectscene/level_point_able_normal.png");
@@ -28,41 +32,6 @@ bool LevelButton::init(int level)
 		m_levelNum = Label::createWithBMFont("fonts/level_number.fnt", StringUtils::format("%02d", level));
 		m_levelNum->setPosition(Vec2(-5, 0));
 		this->addChild(m_levelNum);
-
-		//auto lis = EventListenerTouchOneByOne::create();
-		//lis->setSwallowTouches(true);
-		//lis->onTouchBegan = [this](Touch* t, Event* e)->bool{
-		//	auto pos = this->m_button->convertTouchToNodeSpace(t);
-		//	Rect rc = { 0, 0, this->m_button->getContentSize().width, this->m_button->getContentSize().height };
-		//	if (rc.containsPoint(pos))
-		//	{
-		//		this->m_button->setTexture("levelselectscene/level_point_able_selected.png");
-		//		return true;
-		//	}
-		//	else
-		//		return false;
-		//};
-		//lis->onTouchMoved = [this](Touch* t, Event* e)->void{
-		//	auto pos = this->m_button->convertTouchToNodeSpace(t);
-		//	Rect rc = { 0, 0, this->m_button->getContentSize().width, this->m_button->getContentSize().height };
-		//	if (!rc.containsPoint(pos))
-		//	{
-		//		this->m_button->setTexture("levelselectscene/level_point_able_normal.png");
-		//	}
-		//};
-		//lis->onTouchEnded = [this](Touch* t, Event* e)->void{
-		//	auto pos = this->m_button->convertTouchToNodeSpace(t);
-		//	Rect rc = { 0, 0, this->m_button->getContentSize().width, this->m_button->getContentSize().height };
-		//	if (rc.containsPoint(pos))
-		//	{
-		//		this->m_button->setTexture("levelselectscene/level_point_able_normal.png");
-		//		//replace scene or callback
-		//		CCLOG("callback");
-		//		int num = int(CCRANDOM_0_1() * 3 + 1);
-		//		this->pass(num);
-		//	}
-		//};
-		//_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, this);
 	}
 	
 	return true;
@@ -83,23 +52,39 @@ Size LevelButton::getButtonSize()
 void LevelButton::setNormal()
 {
 	//data
-	m_button->setTexture("levelselectscene/level_point_able_normal.png");
+	auto str = m_textureStr[int(m_state)];
+	m_button->setTexture(StringUtils::format("levelselectscene/level_point_%s_normal.png", str.c_str()));
 }
 
 void LevelButton::setSelected()
 {
 	//data
-	m_button->setTexture("levelselectscene/level_point_able_selected.png");
+	auto str = m_textureStr[int(m_state)];
+	m_button->setTexture(StringUtils::format("levelselectscene/level_point_%s_selected.png", str.c_str()));
 }
+
+void LevelButton::setState(ButtonState state)
+{
+	m_state = state;
+	if (m_state == DISABLE)
+	{
+		m_button->setTexture("levelselectscene/level_point_disable.png");
+	}
+	else
+	{
+		setNormal();
+	}
+}
+
 void LevelButton::pass(int starNum)
 {
 	if (m_star != nullptr)
 	{
-		if (starNum == m_star->getStarNum())
-			return;
-		else
-			m_star->removeFromParent();
+		if (starNum != m_star->getStarNum())
+			m_star->setStarNum(starNum);
+		return;
 	}
+	setState(ButtonState::PASS);
 	m_star = LevelStar::create();
 	m_star->setStarNum(starNum);
 	m_star->setPosition(Vec2(0, -m_button->getContentSize().height / 2));

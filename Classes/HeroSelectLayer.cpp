@@ -70,8 +70,10 @@ bool HeroSelect::init()
 	}
 	initTitle();
 	initItemBG();
+	initStartButton();
 
 	initHeroIcon();
+	initTeamList();
 
 	//set swallow
 	auto lis = EventListenerTouchOneByOne::create();
@@ -258,9 +260,9 @@ void HeroSelect::initHeroIcon()
 					}
 					m_focus = p1;
 					m_focus->getChildByTag(2)->setVisible(true);
-					//callback
-					CCLOG("hero icon callback");
 					//list add
+					m_teamList->addHero(m_focus->getTag());
+					setStartButtonState(m_teamList->isFull());
 					break;
 				}
 			}
@@ -284,9 +286,9 @@ void HeroSelect::initHeroIcon()
 					}
 					m_focus = p2;
 					m_focus->getChildByTag(2)->setVisible(true);
-					//callback
-					CCLOG("hero icon callback");
 					//list add
+					m_teamList->addHero(m_focus->getTag());
+					setStartButtonState(m_teamList->isFull());
 					break;
 				}
 			}
@@ -370,16 +372,151 @@ void HeroSelect::initItemBG()
 	auto bg = Sprite::create("gamescene/skill_preview.png");
 	bg->setTag(1);
 	m_itemSelect->addChild(bg);
+	//star
+	m_star = MapLevelStar::create();
+	m_star->setPosition(0, bg->getContentSize().height / 2);
+	m_star->setStarNum(3);
+	m_itemSelect->addChild(m_star);
 	//items
 
 	//preview button
 	m_previewButton = Sprite::create("gamescene/preview.png");
-	m_previewButton->setPosition(bg->getContentSize().width / 4, bg->getContentSize().height / 3);
+	m_previewButton->setPosition(bg->getContentSize().width / 4, bg->getContentSize().height / 4);
 	m_previewButton->setTag(2);
+	m_previewButton->runAction(RepeatForever::create(
+		Sequence::create(MoveBy::create(0.5f, Vec2(-100, 0)), 
+						MoveBy::create(1.0f, Vec2(200, 0)), 
+						MoveBy::create(0.5f, Vec2(-100, 0)), 
+						nullptr)
+	));
 	m_itemSelect->addChild(m_previewButton);
+	auto lis = EventListenerTouchOneByOne::create();
+	lis->setSwallowTouches(true);
+	lis->onTouchBegan = [this](Touch* t, Event* e)->bool{
+		auto pos = m_previewButton->convertTouchToNodeSpace(t);
+		auto rc = Rect{ Vec2::ZERO, m_previewButton->getContentSize() };
+		if (rc.containsPoint(pos))
+		{
+			return true;
+		}
+		return false;
+	};
+	lis->onTouchEnded = [this](Touch* t, Event* e)->void{
+		auto pos = m_previewButton->convertTouchToNodeSpace(t);
+		auto rc = Rect{ Vec2::ZERO, m_previewButton->getContentSize() };
+		if (rc.containsPoint(pos))
+		{
+			this->runAction(MoveBy::create(0.25f, Vec2(0, 720)));
+		}
+	};
+	_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, m_previewButton);
 
 	m_itemSelect->setPosition(size.width / 5 * 4, size.height / 2);
 	this->addChild(m_itemSelect);
+}
+
+void HeroSelect::initStartButton()
+{
+	m_startButton = Node::create();
+	//bg
+	auto bg = Sprite::create("gamescene/cant_start.png");
+	bg->setTag(1);
+	m_startButton->addChild(bg);
+	//label
+
+	m_startButton->setPosition(m_itemSelect->getPositionX(),
+		m_itemSelect->getPositionY() - static_cast<Sprite*>(m_itemSelect->getChildByTag(1))->getContentSize().height / 2 - bg->getContentSize().height);
+	this->addChild(m_startButton);
+}
+
+void HeroSelect::initTeamList()
+{
+	auto size = Director::getInstance()->getVisibleSize();
+	m_teamList = TeamList::create();
+	m_teamList->setPosition(m_clipping->getPositionX() + 100, size.height / 6);
+	this->addChild(m_teamList);
+	auto lis = EventListenerTouchOneByOne::create();
+	lis->setSwallowTouches(true);
+	lis->onTouchBegan = [this](Touch* t, Event* e)->bool{
+		auto pos = m_teamList->convertTouchToNodeSpace(t);
+		auto rc = m_teamList->getBox();
+		if (rc.containsPoint(pos))
+		{
+			return true;
+		}
+		return false;
+	};
+	lis->onTouchEnded = [this](Touch* t, Event* e)->void{
+		auto pos = m_teamList->convertTouchToNodeSpace(t);
+		auto rc = m_teamList->getBox();
+		if (rc.containsPoint(pos))
+		{
+			m_teamList->getTouched(t);
+			setStartButtonState(m_teamList->isFull());
+		}
+	};
+	_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, m_teamList);
+}
+
+void HeroSelect::setStartButtonState(bool can)
+{
+	if (can)
+	{
+		m_startButton->getChildByTag(1)->removeFromParent();
+		//bg
+		auto bg = Sprite::create("gamescene/start_normal.png");
+		bg->setTag(1);
+		m_startButton->addChild(bg);
+		auto lis = EventListenerTouchOneByOne::create();
+		lis->setSwallowTouches(true);
+		lis->onTouchBegan = [this, bg](Touch* t, Event* e)->bool{
+			auto pos = bg->convertTouchToNodeSpace(t);
+			auto rc = Rect{ Vec2::ZERO, bg->getContentSize() };
+			if (rc.containsPoint(pos))
+			{
+				bg->setTexture("gamescene/start_selected.png");
+				return true;
+			}
+			return false;
+		};
+		lis->onTouchMoved = [this, bg](Touch* t, Event* e)->void{
+			auto pos = bg->convertTouchToNodeSpace(t);
+			auto rc = Rect{ Vec2::ZERO, bg->getContentSize() };
+			if (!rc.containsPoint(pos))
+			{
+				bg->setTexture("gamescene/start_normal.png");
+			}
+			else
+			{
+				bg->setTexture("gamescene/start_selected.png");
+			}
+		};
+		lis->onTouchEnded = [this, bg](Touch* t, Event* e)->void{
+			auto pos = bg->convertTouchToNodeSpace(t);
+			auto rc = Rect{ Vec2::ZERO, bg->getContentSize() };
+			if (rc.containsPoint(pos))
+			{
+				bg->setTexture("gamescene/start_normal.png");
+				//start callback
+				CCLOG("start callback");
+				this->runAction(Sequence::create(MoveBy::create(0.5f, Vec2(0, 720)), CallFunc::create([this](){this->m_startcallback(); }), nullptr));
+			}
+		};
+		_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, bg);
+		//label
+		auto label = Sprite::create("gamescene/start_label.png");
+		label->setPosition(bg->getContentSize() / 2);
+		bg->addChild(label);
+	}
+	else
+	{
+		m_startButton->getChildByTag(1)->removeFromParent();
+		//bg
+		auto bg = Sprite::create("gamescene/cant_start.png");
+		bg->setTag(1);
+		m_startButton->addChild(bg);
+		//label
+	}
 }
 
 void HeroSelect::initTitle()
