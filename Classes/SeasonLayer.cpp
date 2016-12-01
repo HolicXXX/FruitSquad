@@ -15,14 +15,19 @@ SeasonLayer* SeasonLayer::create()
 
 bool SeasonLayer::init()
 {
-	if (/*!Layer::init()*/!LayerColor::initWithColor(Color4B(150,150,150,100)))
+	if (!Layer::init())
 	{
 		return false;
 	}
 	auto size = Director::getInstance()->getVisibleSize();
-	//this->setContentSize(size);
 	m_focusIndex = 0;
 	m_callback = nullptr;
+
+	//render
+	auto rt = RenderTexture::create(size.width, size.height, Texture2D::PixelFormat::BGRA8888);
+	rt->setPosition(size / 2);
+	rt->clear(0, 0, 0, 0.6f);
+	this->addChild(rt);
 
 	//init backlight
 	m_backLight = Sprite::create("levelselectscene/season/bg_light.png");

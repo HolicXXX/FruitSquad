@@ -22,7 +22,7 @@ bool TeamList::init()
 	m_count = 0;
 	//data
 	m_maxNum = 1;
-	m_mustChoosePos = m_mustChooseIndex = -1;
+	m_mustChoosePos = m_mustChooseIndex = -2;
 	for (int i = 0; i < m_maxNum;i++)
 	{
 		m_index.push_back(-1);
@@ -253,11 +253,15 @@ int TeamList::detectTouch(Touch* t)
 	{
 		auto node = m_listBG.at(i);
 		auto pos = node->convertTouchToNodeSpace(t);
-		auto size = static_cast<Sprite*>(node->getChildByTag(2))->getContentSize();
-		auto rc = Rect{ -Vec2(size / 2), size };
-		if (rc.containsPoint(pos))
-			return i;
+		if (node->getChildByTag(2) != nullptr)
+		{
+			auto size = static_cast<Sprite*>(node->getChildByTag(2))->getContentSize();
+			auto rc = Rect{ -Vec2(size / 2), size };
+			if (rc.containsPoint(pos))
+				return i;
+		}
 	}
+	return -2;
 }
 
 void TeamList::initBG()

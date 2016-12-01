@@ -3,28 +3,39 @@
 
 #include "cocos2d.h"
 #include "HeroSelectLayer.h"
+#include "cocostudio/CocoStudio.h"
+#include "HeroBase.h"
 
-class GameScene : public cocos2d::Layer
+class GameScene : public Layer
 {
 public:
-	static cocos2d::Scene* createScene();
+	static Scene* createScene();
 	static GameScene* create();
 	virtual bool init();
 
 	virtual void update(float dt);
 private:
-	cocos2d::Node* m_portal;
+	Node* m_portal;
+
+	void initHeros();
+	Vector<HeroBase*> m_heros;
+
+	void aniCallBack(Armature *armature, MovementEventType movementType, const std::string& movementID);
+	Node* m_startEff;
 
 	void initMap();
-	cocos2d::TMXTiledMap* m_map;
+	TMXTiledMap* m_map;
 
 	HeroSelect* m_heroSelectLayer;
 	void initHeroSelect();
 
-	cocos2d::Layer* m_midLayer;
+	Layer* m_midLayer;
 	void initSelectMidLayer();
 
 	void startCallBack();
+
+	void initUI();
+
 };
 
 

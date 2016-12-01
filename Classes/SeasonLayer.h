@@ -3,7 +3,7 @@
 
 #include "cocos2d.h"
 
-class SeasonLayer : public cocos2d::LayerColor
+class SeasonLayer : public cocos2d::Layer
 {
 public:
 	static SeasonLayer* create();

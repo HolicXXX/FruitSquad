@@ -261,8 +261,11 @@ void HeroSelect::initHeroIcon()
 					m_focus = p1;
 					m_focus->getChildByTag(2)->setVisible(true);
 					//list add
-					m_teamList->addHero(m_focus->getTag());
-					setStartButtonState(m_teamList->isFull());
+					if (m_focus->getTag() <= 0)//data 0
+					{
+						m_teamList->addHero(m_focus->getTag());
+						setStartButtonState(m_teamList->isFull());
+					}
 					break;
 				}
 			}
@@ -287,8 +290,11 @@ void HeroSelect::initHeroIcon()
 					m_focus = p2;
 					m_focus->getChildByTag(2)->setVisible(true);
 					//list add
-					m_teamList->addHero(m_focus->getTag());
-					setStartButtonState(m_teamList->isFull());
+					if (m_focus->getTag() <= 0)//data 0
+					{
+						m_teamList->addHero(m_focus->getTag());
+						setStartButtonState(m_teamList->isFull());
+					}
 					break;
 				}
 			}
@@ -499,7 +505,7 @@ void HeroSelect::setStartButtonState(bool can)
 				bg->setTexture("gamescene/start_normal.png");
 				//start callback
 				CCLOG("start callback");
-				this->runAction(Sequence::create(MoveBy::create(0.5f, Vec2(0, 720)), CallFunc::create([this](){this->m_startcallback(); }), nullptr));
+				this->m_startcallback();
 			}
 		};
 		_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, bg);
