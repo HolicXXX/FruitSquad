@@ -1,6 +1,7 @@
 #include "HeroSelectLayer.h"
 #include "LoadingScene.h"
 #include "LevelSelectedScene.h"
+#include "DataManager.h"
 USING_NS_CC;
 
 HeroSelect* HeroSelect::create()
@@ -503,8 +504,8 @@ void HeroSelect::setStartButtonState(bool can)
 			if (rc.containsPoint(pos))
 			{
 				bg->setTexture("gamescene/start_normal.png");
-				//start callback
-				CCLOG("start callback");
+				DataManager::getInstance()->submitTeamList(m_teamList->getIndexList());
+				DataManager::getInstance()->submitTeamNumber(m_teamList->getCount());
 				this->m_startcallback();
 			}
 		};

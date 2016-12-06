@@ -37,11 +37,6 @@ bool LevelButton::init(int level)
 	return true;
 }
 
-void LevelButton::update(float dt)
-{
-
-}
-
 Size LevelButton::getButtonSize()
 {
 	if (m_button)

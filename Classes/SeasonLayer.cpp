@@ -24,7 +24,7 @@ bool SeasonLayer::init()
 	m_callback = nullptr;
 
 	//render
-	auto rt = RenderTexture::create(size.width, size.height, Texture2D::PixelFormat::BGRA8888);
+	auto rt = RenderTexture::create(size.width, size.height, Texture2D::PixelFormat::RGBA8888);
 	rt->setPosition(size / 2);
 	rt->clear(0, 0, 0, 0.6f);
 	this->addChild(rt);

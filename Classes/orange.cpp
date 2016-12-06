@@ -1,4 +1,5 @@
 #include "orange.h"
+#include "orangeSkill.h"
 
 orange* orange::create()
 {
@@ -24,34 +25,73 @@ bool orange::init()
 	resetHPBar();
 
 	initAni();
-	this->scheduleUpdate();
 	return true;
 }
 
 void orange::useSkill()
 {
-	//TODO
+	m_target = Vec2(CCRANDOM_0_1() * 10.0f - 5, CCRANDOM_0_1() * 10.0f - 5).getNormalized();
+	this->setBaseState(SKILL);
 }
 
 void orange::update(float dt)
 {
 	if (m_speed != 0 && m_dir != Vec2::ZERO)
 	{
-		this->setPosition(this->getPosition() + m_dir * m_speed * dt);
+		this->setPosition(this->getPosition() + m_dir * m_speed);
 	}
 }
 
 void orange::initAni()
 {
 	//manager data
-	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/hero/orange/orange.ExportJson");
 	if (m_ani == nullptr)
 	{
 		//callback
 		m_ani = Armature::create("orange");
+		m_ani->getAnimation()->setMovementEventCallFunc(CC_CALLBACK_3(orange::aniCallFunc, this));
 		m_ani->getAnimation()->play("low_stand");
 		m_currentAni = "low_stand";
 		this->addChild(m_ani);
+	}
+}
+
+void orange::aniCallFunc(Armature *armature, MovementEventType movementType, const std::string& movementID)
+{
+	if (movementType == LOOP_COMPLETE)
+	{
+		if (m_baseState == SKILL)
+		{
+			SkillLevel sl;
+			switch (m_level)
+			{
+			case LOW:
+			{
+				sl = SkillLevel::SKILL_LOW;
+			}
+				break;
+			case MID:
+			{
+				sl = SkillLevel::SKILL_MID;
+			}
+				break;
+			case HIGH:
+			{
+				sl = SkillLevel::SKILL_HIGH;
+			}
+				break;
+			default:
+				break;
+			}
+			auto skill = orangeSkill::create(sl, m_target);
+			CCLOG("%f,%f", m_target.x, m_target.y);
+			skill->setBox();
+			skill->setPosition(this->getPosition());
+			this->getParent()->addChild(skill, this->getZOrder());
+			//add to manager
+			skill->scheduleUpdate();
+			this->setBaseState(m_preState);
+		}
 	}
 }
 
@@ -60,8 +100,6 @@ std::string orange::getAnimationName()
 	std::string ret = "";
 	char * levelStr[] = { "low", "mid", "high" };
 	char * stateStr[] = { "_walk_left", "_attack", "_skill", "_stand" };
-	char * attDirStr[] = { "_left", "_leftup", "_leftdown", "_down" };
-	char * skillDirStr[] = { "_lr", "_up", "_down" };
 	switch (m_level)
 	{
 	case LOW:
@@ -72,53 +110,39 @@ std::string orange::getAnimationName()
 		case WALK:
 		{
 			ret += stateStr[0];
+			if (m_dir.x > 0)
+			{
+				this->setRight(true);
+			}
+			else
+			{
+				this->setRight(false);
+			}
 		}
 			break;
 		case ATTACK:
 		{
 			ret += stateStr[1];
-			//target
-			auto degrees = CC_RADIANS_TO_DEGREES(m_target.getAngle());
-			if (degrees >= 45 && degrees <= 135)
-			{
-				ret += attDirStr[1];
-			}
-			else if ((degrees >= -135 && degrees <= -105) || (degrees >= -75 && degrees <= -45))
-			{
-				ret += attDirStr[2];
-			}
-			else if (degrees > -105 && degrees < -75)
-			{
-				ret += attDirStr[3];
-			}
-			else
-			{
-				ret += attDirStr[0];
-			}
+			ret += getAttAniStr();
 		}
 			break;
 		case SKILL:
 		{
 			ret += stateStr[2];
-			//target
-			auto degrees = CC_RADIANS_TO_DEGREES(m_target.getAngle());
-			if (degrees >= 45 && degrees <= 135)
-			{
-				ret += skillDirStr[1];
-			}
-			else if (degrees >= -45 && degrees <= -135)
-			{
-				ret += skillDirStr[2];
-			}
-			else
-			{
-				ret += skillDirStr[0];
-			}
+			ret += getSkillAniStr();
 		}
 			break;
 		case STOP:
 		{
 			ret += stateStr[3];
+			if (m_dir.x > 0)
+			{
+				this->setRight(true);
+			}
+			else
+			{
+				this->setRight(false);
+			}
 		}
 			break;
 		default:
@@ -134,53 +158,39 @@ std::string orange::getAnimationName()
 		case WALK:
 		{
 			ret += stateStr[0];
+			if (m_dir.x > 0)
+			{
+				this->setRight(true);
+			}
+			else
+			{
+				this->setRight(false);
+			}
 		}
 		break;
 		case ATTACK:
 		{
 			ret += stateStr[1];
-			//target
-			auto degrees = CC_RADIANS_TO_DEGREES(m_target.getAngle());
-			if (degrees >= 45 && degrees <= 135)
-			{
-				ret += attDirStr[1];
-			}
-			else if ((degrees >= -135 && degrees <= -105) || (degrees >= -75 && degrees <= -45))
-			{
-				ret += attDirStr[2];
-			}
-			else if (degrees > -105 && degrees < -75)
-			{
-				ret += attDirStr[3];
-			}
-			else
-			{
-				ret += attDirStr[0];
-			}
+			ret += getAttAniStr();
 		}
 		break;
 		case SKILL:
 		{
 			ret += stateStr[2];
-			//target
-			auto degrees = CC_RADIANS_TO_DEGREES(m_target.getAngle());
-			if (degrees >= 45 && degrees <= 135)
-			{
-				ret += skillDirStr[1];
-			}
-			else if (degrees >= -45 && degrees <= -135)
-			{
-				ret += skillDirStr[2];
-			}
-			else
-			{
-				ret += skillDirStr[0];
-			}
+			ret += getSkillAniStr();
 		}
 		break;
 		case STOP:
 		{
 			ret += stateStr[3];
+			if (m_dir.x > 0)
+			{
+				this->setRight(true);
+			}
+			else
+			{
+				this->setRight(false);
+			}
 		}
 		break;
 		default:
@@ -196,53 +206,39 @@ std::string orange::getAnimationName()
 		case WALK:
 		{
 			ret += stateStr[0];
+			if (m_dir.x > 0)
+			{
+				this->setRight(true);
+			}
+			else
+			{
+				this->setRight(false);
+			}
 		}
 		break;
 		case ATTACK:
 		{
 			ret += stateStr[1];
-			//target
-			auto degrees = CC_RADIANS_TO_DEGREES(m_target.getAngle());
-			if (degrees >= 45 && degrees <= 135)
-			{
-				ret += attDirStr[1];
-			}
-			else if ((degrees >= -135 && degrees <= -105) || (degrees >= -75 && degrees <= -45))
-			{
-				ret += attDirStr[2];
-			}
-			else if (degrees > -105 && degrees < -75)
-			{
-				ret += attDirStr[3];
-			}
-			else
-			{
-				ret += attDirStr[0];
-			}
+			ret += getAttAniStr();
 		}
 		break;
 		case SKILL:
 		{
 			ret += stateStr[2];
-			//target
-			auto degrees = CC_RADIANS_TO_DEGREES(m_target.getAngle());
-			if (degrees >= 45 && degrees <= 135)
-			{
-				ret += skillDirStr[1];
-			}
-			else if (degrees >= -45 && degrees <= -135)
-			{
-				ret += skillDirStr[2];
-			}
-			else
-			{
-				ret += skillDirStr[0];
-			}
+			ret += getSkillAniStr();
 		}
 		break;
 		case STOP:
 		{
 			ret += stateStr[3];
+			if (m_dir.x > 0)
+			{
+				this->setRight(true);
+			}
+			else
+			{
+				this->setRight(false);
+			}
 		}
 		break;
 		default:
@@ -252,6 +248,94 @@ std::string orange::getAnimationName()
 		break;
 	default:
 		break;
+	}
+	return ret;
+}
+
+std::string orange::getAttAniStr()
+{
+	std::string ret = "";
+	char * attDirStr[] = { "_left", "_leftup", "_leftdown", "_down" };
+	//target
+	auto degrees = -CC_RADIANS_TO_DEGREES(m_target.getAngle());
+	if (degrees >= 30 && degrees < 75)
+	{
+		ret = attDirStr[2];
+		this->setRight(true);
+	}
+	else if (degrees >= 105 && degrees < 150)
+	{
+		ret = attDirStr[2];
+		this->setRight(false);
+	}
+	else if (degrees >= 75 && degrees < 90)
+	{
+		ret = attDirStr[3];
+		this->setRight(true);
+	}
+	else if (degrees >= 90 && degrees < 105)
+	{
+		ret = attDirStr[3];
+		this->setRight(false);
+	}
+	else if ((degrees >= 150 && degrees <= 180) || (degrees >= -180 && degrees <= -150))
+	{
+		ret = attDirStr[0];
+		this->setRight(false);
+	}
+	else if (degrees >= -30 && degrees < 30)
+	{
+		ret = attDirStr[0];
+		this->setRight(true);
+	}
+	else if (degrees >= -90 && degrees < -30)
+	{
+		ret = attDirStr[1];
+		this->setRight(true);
+	}
+	else
+	{
+		ret = attDirStr[1];
+		this->setRight(false);
+	}
+	return ret;
+}
+
+std::string orange::getSkillAniStr()
+{
+	std::string ret = "";
+	char * skillDirStr[] = { "_lr", "_up", "_down" };
+	//target
+	auto degrees = -CC_RADIANS_TO_DEGREES(m_target.getAngle());
+	if (degrees >= 45 && degrees < 90)
+	{
+		ret = skillDirStr[2];
+		this->setRight(true);
+	}
+	else if (degrees >= 90 && degrees < 135)
+	{
+		ret = skillDirStr[2];
+		this->setRight(false);
+	}
+	else if ((degrees >= 135 && degrees <= 180) || (degrees >= -180 && degrees < -135))
+	{
+		ret = skillDirStr[0];
+		this->setRight(false);
+	}
+	else if (degrees >= -135 && degrees < -90)
+	{
+		ret = skillDirStr[1];
+		this->setRight(false);
+	}
+	else if (degrees >= 90 && degrees < -45)
+	{
+		ret = skillDirStr[1];
+		this->setRight(true);
+	}
+	else
+	{
+		ret = skillDirStr[0];
+		this->setRight(true);
 	}
 	return ret;
 }
@@ -268,11 +352,12 @@ void orange::playAnimation(const std::string & name)
 void orange::setBaseState(HeroState s)
 {
 	//more logic
-	if (m_baseState != s)
-	{
-		HeroBase::setBaseState(s);
-		auto name = getAnimationName();
-		playAnimation(name);
+	HeroBase::setBaseState(s);
+	auto name = getAnimationName();
+	if (name.compare(m_currentAni) != 0)
+	{	
+		m_currentAni = name;
+		playAnimation(m_currentAni);
 	}
 }
 
@@ -287,7 +372,7 @@ void orange::setHeroLevel(HeroLevel l)
 void orange::levelUp()
 {
 	HeroBase::levelUp();
-	//
+	//level up ani
 	auto name = getAnimationName();
 	playAnimation(name);
 }

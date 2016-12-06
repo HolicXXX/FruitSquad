@@ -16,9 +16,9 @@ class LevelButton : public cocos2d::Node
 public:
 	static LevelButton* create(int level);
 	virtual bool init(int level);
-	virtual void update(float dt);
 
 	cocos2d::Size getButtonSize();
+
 	void pass(int starNum);
 	void setNormal();
 	void setSelected();

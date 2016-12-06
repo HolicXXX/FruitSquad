@@ -2,6 +2,7 @@
 #include "cocostudio/CocoStudio.h"
 USING_NS_CC;
 using namespace cocostudio;
+#include "AnimationManager.h"
 
 LoadingScene* LoadingScene::create()
 {
@@ -23,10 +24,10 @@ bool LoadingScene::init()
 	}
 	m_callback = nullptr;
 	auto size = Director::getInstance()->getVisibleSize();
+	AnimationManager::getInstance()->loadLoadingSceneAni();
 
 	initBackGround();
 	//hero
-	ArmatureDataManager::getInstance()->addArmatureFileInfo("loadingscene/loading0.png", "loadingscene/loading0.plist", "loadingscene/loading.ExportJson");
 	auto hero = Armature::create("loading");
 	hero->getAnimation()->play("hero");
 	hero->setPosition(size.width / 2, size.height / 3 * 2);

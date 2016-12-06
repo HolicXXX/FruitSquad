@@ -8,7 +8,7 @@ bool HeroBase::init()
 	{
 		return false;
 	}
-	m_baseState = STOP;
+	m_preState = m_baseState = STOP;
 	m_dir = { 0, 0 };
 	m_isVisi = true;
 	m_isRight = false;
@@ -17,7 +17,7 @@ bool HeroBase::init()
 	m_currentAni = "";
 	m_hpBar = nullptr;
 	m_ani = nullptr;
-	m_target = { 0, 0 };
+	m_target = { 2, 1 };
 
 	initMoveSpeed();
 
@@ -113,5 +113,153 @@ void HeroBase::resetHPBar()
 void HeroBase::initMoveSpeed()
 {
 	//data
-	m_speed = 10;
+	m_speed = 3;
+}
+
+void HeroBase::pauseAll()
+{
+	setBaseState(STOP);
+	this->unscheduleUpdate();
+}
+
+void HeroBase::resumeAll()
+{
+	setBaseState(m_preState);
+	this->scheduleUpdate();
+}
+
+void HeroBase::pointCheck()
+{
+	if (m_checkPoint["name"].asString().compare("end") != 0)
+	{
+		auto pos = Vec2{ m_checkPoint["x"].asFloat(), m_checkPoint["y"].asFloat() };
+		auto hPos = this->getPosition();
+		auto dir = this->getDir();
+		bool isget = false;
+		if (dir.x > 0)
+		{
+			if (hPos.x >= pos.x)
+			{
+				isget = true;
+			}
+		}
+		else if (dir.x < 0)
+		{
+			if (hPos.x <= pos.x)
+			{
+				isget = true;
+			}
+		}
+		else
+		{
+			if (dir.y > 0)
+			{
+				if (hPos.y >= pos.y)
+				{
+					isget = true;
+				}
+			}
+			else if (dir.y < 0)
+			{
+				if (hPos.y <= pos.y)
+				{
+					isget = true;
+				}
+			}
+		}
+		if (isget)
+		{
+			this->setPosition(pos);
+			auto newdir = getNextDir();
+			if (newdir.x < 0)
+			{
+				this->setRight(false);
+			}
+			else if (newdir.x > 0)
+			{
+				this->setRight(true);
+			}
+			this->setDir(newdir);
+			m_checkPoint = m_changeCheckPoint(m_checkPoint);
+		}
+	}
+	else
+	{
+		if (m_baseState != STOP)
+		{
+			auto pos = Vec2{ m_checkPoint["x"].asFloat(), m_checkPoint["y"].asFloat() };
+			auto hPos = this->getPosition();
+			auto dir = this->getDir();
+			bool isget = false;
+			if (dir.x > 0)
+			{
+				if (hPos.x >= pos.x)
+				{
+					isget = true;
+				}
+			}
+			else if (dir.x < 0)
+			{
+				if (hPos.x <= pos.x)
+				{
+					isget = true;
+				}
+			}
+			else
+			{
+				if (dir.y > 0)
+				{
+					if (hPos.y >= pos.y)
+					{
+						isget = true;
+					}
+				}
+				else if (dir.y < 0)
+				{
+					if (hPos.y <= pos.y)
+					{
+						isget = true;
+					}
+				}
+			}
+			if (isget)
+			{
+				this->setPosition(pos);
+				auto newdir = Vec2{ 0, 0 };
+				this->setDir(newdir);
+				this->setBaseState(HeroState::STOP);
+			}
+		}
+	}		
+}
+
+Vec2 HeroBase::getNextDir()
+{
+	Vec2 dir = { 0, 0 };
+	switch (m_checkPoint["type"].asInt())
+	{
+	case 1:
+	{
+		dir = { 1, 0 };
+	}
+	break;
+	case 2:
+	{
+		dir = { 0, -1 };
+	}
+	break;
+	case 3:
+	{
+		dir = { -1, 0 };
+	}
+	break;
+	case 4:
+	{
+		dir = { 0, 1 };
+	}
+	break;
+	default:
+		break;
+	}
+	return dir;
 }

@@ -20,7 +20,10 @@ public:
 	virtual void setHeroLevel(HeroLevel l);
 	virtual void levelUp();
 private:
+	std::string getAttAniStr();
+	std::string getSkillAniStr();
 
+	void aniCallFunc(Armature *armature, MovementEventType movementType, const std::string& movementID);
 };
 
 

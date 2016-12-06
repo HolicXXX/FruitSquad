@@ -4,6 +4,7 @@
 #include "cocostudio/CocoStudio.h"
 USING_NS_CC;
 using namespace cocostudio;
+#include "AnimationManager.h"
 
 Scene* StartScene::createScene()
 {
@@ -32,6 +33,7 @@ bool StartScene::init()
 		return false;
 	}
 	auto size = Director::getInstance()->getVisibleSize();
+	AnimationManager::getInstance()->loadStartSceneAni();
 	//init sky
 	initBG();
 	//logo
@@ -58,7 +60,6 @@ bool StartScene::init()
 	m_ball->runAction(RepeatForever::create(RotateBy::create(24.0f, 360)));
 	this->addChild(m_ball);
 	//hero armature
-	ArmatureDataManager::getInstance()->addArmatureFileInfo("startscene/start0.png", "startscene/start0.plist", "startscene/start.ExportJson");
 	auto hero = Armature::create("start");
 	hero->setPosition(size.width / 5 * 2, size.height / 2);
 	hero->getAnimation()->play("hero");

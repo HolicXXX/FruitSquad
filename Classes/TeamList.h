@@ -9,6 +9,7 @@ public:
 	static TeamList* create();
 	virtual bool init();
 
+	int getCount(){ return m_count; }
 	bool isFull(){ return m_count == m_maxNum; }
 	void addHero(int index);
 	std::vector<int> getIndexList(){ return m_index; }
