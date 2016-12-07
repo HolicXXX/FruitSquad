@@ -4,7 +4,7 @@ using namespace ui;
 
 bool HeroBase::init()
 {
-	if (!Node::create())
+	if (!TargetBase::init())
 	{
 		return false;
 	}
@@ -12,16 +12,12 @@ bool HeroBase::init()
 	m_dir = { 0, 0 };
 	m_isVisi = true;
 	m_isRight = false;
-	m_level = LOW;
 	m_name = "";
 	m_currentAni = "";
-	m_hpBar = nullptr;
-	m_ani = nullptr;
-	m_target = { 2, 1 };
+	m_target = nullptr;
 
 	initMoveSpeed();
 
-	this->setCascadeOpacityEnabled(true);
 
 	return true;
 }
@@ -86,7 +82,7 @@ void HeroBase::levelUp()
 {
 	if (m_level == HIGH)
 		return;
-	m_level = HeroLevel(int(m_level) + 1);
+	m_level = Level(int(m_level) + 1);
 }
 
 void HeroBase::resetHPBar()

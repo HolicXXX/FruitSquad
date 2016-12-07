@@ -5,6 +5,7 @@
 #include "HeroSelectLayer.h"
 #include "cocostudio/CocoStudio.h"
 #include "HeroBase.h"
+#include "EnemyBase.h"
 #include "UIButton.h"
 #include "SkillButton.h"
 #include "HPBottle.h"
@@ -31,6 +32,9 @@ private:
 	HeroBase* getHero(int index);
 	void initSkills();
 	Vector<SkillButton*> m_skills;
+
+	void initEnemys();
+	Vector<EnemyBase*> m_enemys;
 
 	void aniCallBack(Armature *armature, MovementEventType movementType, const std::string& movementID);
 	Node* m_startEff;

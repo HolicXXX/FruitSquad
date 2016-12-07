@@ -4,7 +4,7 @@
 USING_NS_CC;
 using namespace cocostudio;
 
-orangeSkill* orangeSkill::create(SkillLevel l, cocos2d::Vec2 dir)
+orangeSkill* orangeSkill::create(Level l, cocos2d::Vec2 dir)
 {
 	auto os = new orangeSkill();
 	if (os && os->init(l, dir))
@@ -16,7 +16,7 @@ orangeSkill* orangeSkill::create(SkillLevel l, cocos2d::Vec2 dir)
 	return nullptr;
 }
 
-bool orangeSkill::init(SkillLevel l, cocos2d::Vec2 dir)
+bool orangeSkill::init(Level l, cocos2d::Vec2 dir)
 {
 	if (!Node::init())
 	{
@@ -38,17 +38,17 @@ void orangeSkill::initAni()
 	std::string str = "";
 	switch (m_level)
 	{
-	case SKILL_LOW:
+	case LOW:
 	{
 		str = "skill_low";
 	}
 		break;
-	case SKILL_MID:
+	case MID:
 	{
 		str = "skill_mid";
 	}
 		break;
-	case SKILL_HIGH:
+	case HIGH:
 	{
 		str = "skill_high";
 	}
@@ -87,5 +87,4 @@ void orangeSkill::update(float dt)
 {
 	this->setPosition(this->getPosition() + m_dir*m_speed);
 	m_hitRect.origin += m_dir * m_speed;//box move
-	CCLOG("%f,%f", m_hitRect.origin.x, m_hitRect.origin.y);
 }

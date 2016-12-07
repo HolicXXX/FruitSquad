@@ -8,7 +8,7 @@ public:
 
 	void loadStartSceneAni();
 	void loadLoadingSceneAni();
-	void loadGameSceneAni();
+	void loadGameSceneAni(int level);
 };
 
 

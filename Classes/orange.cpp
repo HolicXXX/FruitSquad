@@ -1,5 +1,6 @@
 #include "orange.h"
 #include "orangeSkill.h"
+#include "TargetManger.h"
 
 orange* orange::create()
 {
@@ -24,18 +25,67 @@ bool orange::init()
 	m_hpMax = m_hp = 1000;
 	resetHPBar();
 
+	m_attackCircleR = 150;
+	initAttCircle();
+
 	initAni();
 	return true;
 }
 
+void orange::initAttCircle()
+{
+	m_attCircle = Sprite::create("gamescene/hero/hero_skill_scope.png");
+	m_attCircle->setScale(m_attackCircleR / (m_attCircle->getContentSize().width / 2));
+	m_attCircle->setColor(Color3B::GREEN);
+	this->addChild(m_attCircle);
+}
+
 void orange::useSkill()
 {
-	m_target = Vec2(CCRANDOM_0_1() * 10.0f - 5, CCRANDOM_0_1() * 10.0f - 5).getNormalized();
 	this->setBaseState(SKILL);
+}
+
+void orange::checkTargetPos()
+{
+	if (m_target)
+	{
+		auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2::ZERO));
+		if (dir.length() > m_attackCircleR)
+		{
+			m_target = nullptr;
+			if (m_baseState != WALK)
+			{
+				setBaseState(WALK);
+			}
+			return;
+		}
+		if (m_baseState != HeroState::ATTACK)
+		{
+			setBaseState(HeroState::ATTACK);
+		}
+		else
+		{
+			auto name = getAnimationName();
+			if (name.compare(m_currentAni) != 0)
+			{
+				m_currentAni = name;
+				playAnimation(m_currentAni);
+			}
+		}
+	}
+	else
+	{
+		if (m_baseState != WALK)
+		{
+			setBaseState(WALK);
+		}
+		m_target = TargetManager::getInstance()->getEnemyTarget(this);
+	}
 }
 
 void orange::update(float dt)
 {
+	checkTargetPos();
 	if (m_speed != 0 && m_dir != Vec2::ZERO)
 	{
 		this->setPosition(this->getPosition() + m_dir * m_speed);
@@ -44,7 +94,6 @@ void orange::update(float dt)
 
 void orange::initAni()
 {
-	//manager data
 	if (m_ani == nullptr)
 	{
 		//callback
@@ -62,29 +111,8 @@ void orange::aniCallFunc(Armature *armature, MovementEventType movementType, con
 	{
 		if (m_baseState == SKILL)
 		{
-			SkillLevel sl;
-			switch (m_level)
-			{
-			case LOW:
-			{
-				sl = SkillLevel::SKILL_LOW;
-			}
-				break;
-			case MID:
-			{
-				sl = SkillLevel::SKILL_MID;
-			}
-				break;
-			case HIGH:
-			{
-				sl = SkillLevel::SKILL_HIGH;
-			}
-				break;
-			default:
-				break;
-			}
-			auto skill = orangeSkill::create(sl, m_target);
-			CCLOG("%f,%f", m_target.x, m_target.y);
+			auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2::ZERO)).getNormalized();
+			auto skill = orangeSkill::create(m_level, dir);
 			skill->setBox();
 			skill->setPosition(this->getPosition());
 			this->getParent()->addChild(skill, this->getZOrder());
@@ -114,9 +142,13 @@ std::string orange::getAnimationName()
 			{
 				this->setRight(true);
 			}
-			else
+			else if (m_dir.x < 0)
 			{
 				this->setRight(false);
+			}
+			else
+			{
+				this->setRight(m_isRight);
 			}
 		}
 			break;
@@ -162,9 +194,13 @@ std::string orange::getAnimationName()
 			{
 				this->setRight(true);
 			}
-			else
+			else if (m_dir.x < 0)
 			{
 				this->setRight(false);
+			}
+			else
+			{
+				this->setRight(m_isRight);
 			}
 		}
 		break;
@@ -210,9 +246,13 @@ std::string orange::getAnimationName()
 			{
 				this->setRight(true);
 			}
-			else
+			else if (m_dir.x < 0)
 			{
 				this->setRight(false);
+			}
+			else
+			{
+				this->setRight(m_isRight);
 			}
 		}
 		break;
@@ -257,7 +297,8 @@ std::string orange::getAttAniStr()
 	std::string ret = "";
 	char * attDirStr[] = { "_left", "_leftup", "_leftdown", "_down" };
 	//target
-	auto degrees = -CC_RADIANS_TO_DEGREES(m_target.getAngle());
+	auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2::ZERO)).getNormalized();
+	auto degrees = -CC_RADIANS_TO_DEGREES(dir.getAngle());
 	if (degrees >= 30 && degrees < 75)
 	{
 		ret = attDirStr[2];
@@ -306,7 +347,8 @@ std::string orange::getSkillAniStr()
 	std::string ret = "";
 	char * skillDirStr[] = { "_lr", "_up", "_down" };
 	//target
-	auto degrees = -CC_RADIANS_TO_DEGREES(m_target.getAngle());
+	auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2::ZERO)).getNormalized();
+	auto degrees = -CC_RADIANS_TO_DEGREES(dir.getAngle());
 	if (degrees >= 45 && degrees < 90)
 	{
 		ret = skillDirStr[2];
@@ -361,7 +403,7 @@ void orange::setBaseState(HeroState s)
 	}
 }
 
-void orange::setHeroLevel(HeroLevel l)
+void orange::setHeroLevel(Level l)
 {
 	HeroBase::setHeroLevel(l);
 	//

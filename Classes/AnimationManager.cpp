@@ -25,9 +25,10 @@ void AnimationManager::loadLoadingSceneAni()
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("loadingscene/loading0.png", "loadingscene/loading0.plist", "loadingscene/loading.ExportJson");
 }
 
-void AnimationManager::loadGameSceneAni()
+void AnimationManager::loadGameSceneAni(int level)
 {
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/start/start_count_down.ExportJson");
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/hero/orange/orange.ExportJson");
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/hero/orange/orangeskill.ExportJson");
+	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/enemy/scarab/scarab.ExportJson");
 }

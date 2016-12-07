@@ -1,10 +1,12 @@
 #include "GameScene.h"
 #include "orange.h"
+#include "scarab.h"
 #include "AnimationManager.h"
 #include "GameMenuLayer.h"
 #include "LoadingScene.h"
 #include "LevelSelectedScene.h"
 #include "DataManager.h"
+#include "TargetManger.h"
 
 Scene* GameScene::createScene()
 {
@@ -31,11 +33,11 @@ bool GameScene::init()
 		return false;
 	}
 	auto size = Director::getInstance()->getVisibleSize();
-	AnimationManager::getInstance()->loadGameSceneAni();
+	AnimationManager::getInstance()->loadGameSceneAni(1);//level
 
 	//init map
 	initMap();
-
+	initEnemys();
 	//scale
 	{
 		auto scale = ((m_mapSize.width / size.width) < (m_mapSize.height / size.height)) ? (m_mapSize.width / size.width) : (m_mapSize.height / size.height);
@@ -264,7 +266,6 @@ void GameScene::aniCallBack(Armature *armature, MovementEventType movementType, 
 			m_midLayer->removeChild(m_startEff);
 			m_hp->setOpacity(255);
 			m_gold->setOpacity(255);
-
 			for (auto h : m_heros)
 			{
 				auto dir = h->getNextDir();
@@ -293,17 +294,7 @@ void GameScene::initHeros()
 		m_map->addChild(h, m_map->getLayer("road")->getZOrder());
 		m_heros.pushBack(h);
 	}
-	/*auto ora = orange::create();
-	ora->setPosition(m_portal->getPosition());
-	ora->setVisi(false);
-
-	auto obj = m_map->getObjectGroup("sign");
-	auto start = obj->getObject("start");
-	ora->setCheckPoint(start);
-	ora->bindCheckCallBack(CC_CALLBACK_1(GameScene::changeCheckPoint, this));
-	
-	m_map->addChild(ora, m_map->getLayer("road")->getZOrder());
-	m_heros.pushBack(ora);*/
+	TargetManager::getInstance()->registHero(m_heros);
 }
 
 HeroBase* GameScene::getHero(int index)
@@ -356,13 +347,32 @@ void GameScene::initSkills()
 	}
 }
 
+void GameScene::initEnemys()
+{
+	auto l = m_map->getObjectGroup("enemy");
+	auto vec = l->getObjects();
+	for (int i = 0; i < vec.size(); i++)
+	{
+		auto obj = vec[i].asValueMap();
+		auto pos = Vec2(obj["x"].asFloat(), obj["y"].asFloat());
+		auto e = scarab::create();
+		e->setPosition(pos);
+		m_map->addChild(e, m_map->getLayer("road")->getZOrder());
+		m_enemys.pushBack(e);
+	}
+	TargetManager::getInstance()->registEnemy(m_enemys);
+}
+
 void GameScene::pauseAll()
 {
 	for (auto h : m_heros)
 	{
 		h->pauseAll();
 	}
-	//enemys
+	for (auto e : m_enemys)
+	{
+		e->pauseAll();
+	}
 	this->unscheduleUpdate();
 }
 
@@ -372,7 +382,10 @@ void GameScene::resumeAll()
 	{
 		h->resumeAll();
 	}
-	//enemys
+	for (auto e : m_enemys)
+	{
+		e->resumeAll();
+	}
 	this->scheduleUpdate();
 }
 
