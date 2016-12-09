@@ -12,12 +12,16 @@ public:
 
 	void registHero(Vector<HeroBase*> vh);
 	void registEnemy(Vector<EnemyBase*> ve);
-	void removeHeor();
-	void removeEnemy();
+	void eraseHero(HeroBase* h);
+	void eraseEnemy(EnemyBase* e);
+	void removeAllHeor();
+	void removeAllEnemy();
 
 	TargetBase* getEnemyTarget(TargetBase* h);
 	TargetBase* getHeroTarget(TargetBase* e);
 
+	Vector<EnemyBase*> getEnemyTargets();
+	Vector<HeroBase*> getHeroTargets();
 private:
 
 	Vector<HeroBase*> m_heros;

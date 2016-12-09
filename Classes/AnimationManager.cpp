@@ -1,8 +1,4 @@
 #include "AnimationManager.h"
-#include "cocos2d.h"
-#include "cocostudio/CocoStudio.h"
-USING_NS_CC;
-using namespace cocostudio;
 
 static AnimationManager* _aniManager = nullptr;
 
@@ -30,5 +26,11 @@ void AnimationManager::loadGameSceneAni(int level)
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/start/start_count_down.ExportJson");
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/hero/orange/orange.ExportJson");
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/hero/orange/orangeskill.ExportJson");
+	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/hero/orange/orangeBulletEff.ExportJson");
+	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/hero/orange/orangeSkillEff.ExportJson");
+
 	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/enemy/scarab/scarab.ExportJson");
+	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/enemy/scarab/scarabBullet.ExportJson");
+
+	ArmatureDataManager::getInstance()->addArmatureFileInfo("gamescene/ani/eff/burn/burn.ExportJson");
 }

@@ -19,6 +19,30 @@ BoxTool* BoxTool::getInstance()
 	return _boxtool;
 }
 
+Rect BoxTool::getBox(Vec2 pos, float rotation, Size ori)
+{
+	Rect ret = {};
+	auto r = abs(rotation);
+	if (r > 90)
+	{
+		ret.size.width = sinf(r) * ori.width + cosf(r) * ori.height;
+		ret.size.height = cosf(r) * ori.width + sinf(r) * ori.height;
+	}
+	else if (r < 90)
+	{
+		ret.size.width = cosf(r) * ori.width + sinf(r) * ori.height;
+		ret.size.height = sinf(r) * ori.width + cosf(r) * ori.height;
+	}
+	else
+	{
+		ret.size.width = ori.height;
+		ret.size.height = ori.width;
+	}
+	ret.origin.x = pos.x - ret.size.width / 2;
+	ret.origin.y = pos.y - ret.size.height / 2;
+	return ret;
+}
+
 Rect BoxTool::getBox(const std::vector<Vec2> & p)
 {
 	Vec2 ori = { 0, 0 };

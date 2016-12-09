@@ -1,6 +1,8 @@
 #ifndef _ANIMATION_MANAGER_H_
 #define _ANIMATION_MANAGER_H_
 
+#include "HeadFile.h"
+
 class AnimationManager
 {
 public:

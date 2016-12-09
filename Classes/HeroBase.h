@@ -18,11 +18,14 @@ public:
 
 	virtual void initAttCircle() = 0;
 	virtual void update(float dt) = 0;
-	virtual void useSkill() = 0;
+	virtual bool useSkill() = 0;
 	virtual void initAni() = 0;
 	virtual void playAnimation(const std::string & name) = 0;
 	virtual std::string getAnimationName() = 0;
 
+	virtual void getHit(Armature* eff, float demage);
+	virtual void getDeBuff(DeBuff* debuff);
+	virtual void getBuff(Armature* eff, BuffType type, float time, float percent = 0);
 	virtual void pauseAll();
 	virtual void resumeAll();
 	virtual void hpDown(float d);

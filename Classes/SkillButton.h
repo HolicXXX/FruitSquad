@@ -23,7 +23,7 @@ public:
 	static SkillButton* create(int index);
 	virtual bool init(int index);
 
-	void bindSkillCallBack(const std::function<void()> & func){ m_callback = func; }
+	void bindSkillCallBack(const std::function<bool()> & func){ m_callback = func; }
 
 	SkillButtonState getState(){ return m_state; }
 
@@ -36,7 +36,7 @@ private:
 	bool m_isCD;
 	void setCDTime();
 	float m_cdTime;
-	std::function<void()> m_callback;
+	std::function<bool()> m_callback;
 
 	float m_effTime;
 	SkillButtonEffect m_effState;

@@ -1,27 +1,31 @@
 #ifndef _ORANGESKILL_H_
 #define _ORANGESKILL_H_
 
-#include "cocos2d.h"
 #include "Level.h"
+#include "BoxBase.h"
 
-class orangeSkill : public cocos2d::Node
+class orangeSkill : public BoxBase
 {
 public:
-	static orangeSkill* create(Level l, cocos2d::Vec2 dir);
-	virtual bool init(Level l, cocos2d::Vec2 dir);
+	static orangeSkill* create(Level l, Vec2 dir);
+	virtual bool init(Level l, Vec2 dir);
 	virtual void update(float dt);
 
-	void setBox();
-	cocos2d::Rect getBox(){ return m_hitRect; }
+	virtual void initEff();
+	virtual void setBox();
+	virtual Rect getBox(){ return m_hitRect; }
+	virtual DeBuff* getDeBuff();
 private:
 	Level m_level;
 	float m_speed;
-	cocos2d::Rect m_hitRect;
+	Rect m_hitRect;
+	std::string m_aniName;
 
 	void initAni();
+	Armature* m_ani;
 	void initDir();
 	float m_rotation;
-	cocos2d::Vec2 m_dir;
+	Vec2 m_dir;
 
 };
 

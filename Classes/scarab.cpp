@@ -21,10 +21,12 @@ bool scarab::init()
 	}
 	//data
 	setName("scarab");
-	m_hpMax = m_hp = 1000;
+	m_hpMax = m_hp = 2000;
+	m_attDemage = 10;
+	m_hitSpeed = 20;
 	resetHPBar();
 
-	m_attackCircleR = 100;
+	m_attackCircleR = 200;
 	initAttCircle();
 	initAni();
 	m_ani->setRotation(-90);
@@ -98,11 +100,14 @@ void scarab::checkTargetPos()
 {
 	if (m_target)
 	{
-		auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2::ZERO));
-		if (dir.length() > m_attackCircleR)
+		auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2(0, -20)));
+		if (dir.length() > m_attackCircleR || m_target->isAlive() == false)
 		{
-			m_target = nullptr;
+			//m_target = nullptr;
 			this->setBaseState(ENEMY_STOP);
+			auto tar = TargetManager::getInstance()->getHeroTarget(this);
+			if (tar != nullptr)
+				m_target = tar;
 			return;
 		}
 		if (m_baseState != EnemyState::ENEMY_ATTACK)
@@ -126,7 +131,39 @@ void scarab::checkTargetPos()
 
 void scarab::update(float dt)
 {
+	for (int i = m_debuffVec.size() - 1; i >= 0; --i)
+	{
+		auto d = m_debuffVec.at(i);
+		if (d->eff == nullptr)
+		{
+			d->removeFromParent();
+			m_debuffVec.eraseObject(d);
+		}
+	}
+	//buff
 	checkTargetPos();
+	if (m_target && m_baseState == EnemyState::ENEMY_ATTACK)
+	{
+		static int count = 0;
+		++count;
+		if (count >= m_hitSpeed)
+		{
+			auto pos = m_target->convertToNodeSpace(this->convertToWorldSpace(Vec2::ZERO));
+			auto bul = Sprite::create("gamescene/ani/enemy/scarab/scarab_bullet.png");
+			bul->setPosition(pos);
+			m_target->addChild(bul);
+			bul->runAction(Sequence::create(MoveTo::create(pos.length() / 1000, Vec2(0,20)),
+				CallFunc::create([this, bul]()->void{
+				auto arm = Armature::create("scarabBullet");
+				arm->getAnimation()->play("scarabBullet");
+				arm->setPosition(bul->getPosition());
+				bul->removeFromParent();
+				m_target->getHit(arm, m_attDemage);
+			})
+				, nullptr));
+			count = 0;
+		}
+	}
 }
 
 void scarab::setBaseState(EnemyState s)

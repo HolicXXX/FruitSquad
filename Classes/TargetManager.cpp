@@ -51,13 +51,33 @@ void TargetManager::registEnemy(Vector<EnemyBase*> ve)
 	m_enemy = ve;
 }
 
-void TargetManager::removeHeor()
+void TargetManager::eraseHero(HeroBase* h)
+{
+	m_heros.eraseObject(h);
+}
+
+void TargetManager::eraseEnemy(EnemyBase* e)
+{
+	m_enemy.eraseObject(e);
+}
+
+void TargetManager::removeAllHeor()
 {
 	m_heros.clear();
 }
 
-void TargetManager::removeEnemy()
+void TargetManager::removeAllEnemy()
 {
 	m_enemy.clear();
+}
+
+Vector<EnemyBase*> TargetManager::getEnemyTargets()
+{
+	return m_enemy;
+}
+
+Vector<HeroBase*> TargetManager::getHeroTargets()
+{
+	return m_heros;
 }
 

@@ -1,4 +1,5 @@
 #include "HeroBase.h"
+#include "TargetManger.h"
 #include "ui/UILoadingBar.h"
 using namespace ui;
 
@@ -69,13 +70,21 @@ void HeroBase::hpDown(float d)
 	if (m_hp < 0)
 	{
 		m_hp = 0;
+		m_ani->setOpacity(0);
+		for (auto h : m_hitVec)
+		{
+			h->removeFromParent();
+		}
+		m_hitVec.clear();
+		TargetManager::getInstance()->eraseHero(this);
+		//more TODO
 	}
 	else if (m_hp > m_hpMax)
 	{
 		m_hp = m_hpMax;
 	}
 	//
-	void resetHPBar();
+	resetHPBar();
 }
 
 void HeroBase::levelUp()
@@ -109,7 +118,32 @@ void HeroBase::resetHPBar()
 void HeroBase::initMoveSpeed()
 {
 	//data
-	m_speed = 3;
+	m_speed = 2;
+}
+
+void HeroBase::getHit(Armature* eff, float demage)
+{
+	this->addChild(eff);
+	m_hitVec.pushBack(eff);
+	eff->getAnimation()->setMovementEventCallFunc(
+		[this, demage,eff](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
+		if (movementType == LOOP_COMPLETE)
+		{
+			this->hpDown(demage);
+			m_hitVec.eraseObject(armature);
+			eff->removeFromParent();
+		}
+	});
+}
+
+void HeroBase::getDeBuff(DeBuff* debuff)
+{
+
+}
+
+void HeroBase::getBuff(Armature* eff, BuffType type, float time, float percent)
+{
+
 }
 
 void HeroBase::pauseAll()

@@ -2,10 +2,8 @@
 #define _TARGETBASE_H_
 
 #include "Level.h"
-#include "cocos2d.h"
-#include "cocostudio/CocoStudio.h"
-USING_NS_CC;
-using namespace cocostudio;
+#include "Buff.h"
+#include "HeadFile.h"
 
 class TargetBase : public Node
 {
@@ -21,17 +19,21 @@ public:
 
 	virtual void pauseAll() = 0;
 	virtual void resumeAll() = 0;
+	virtual void getHit(Armature* eff, float demage) = 0;
+	virtual void getDeBuff(DeBuff* debuff) = 0;
+	virtual void getBuff(Armature* eff, BuffType type, float time, float percent = 0) = 0;
 	virtual void hpDown(float d) = 0;
 	virtual void resetHPBar() = 0;
 
-	bool isAlive(){ return m_hp == 0; }
+	bool isAlive(){ return m_hp > 0; }
 
 	float getAttCircleR(){ return m_attackCircleR; }
-
 protected:
 	Level m_level;
 	float m_hpMax;
 	float m_hp;
+	float m_attDemage;
+	int m_hitSpeed;
 	cocos2d::Node* m_hpBar;
 	std::string m_name;
 
@@ -40,6 +42,10 @@ protected:
 	TargetBase* m_target;
 	Sprite* m_attCircle;
 	float m_attackCircleR;
+
+	Vector<Armature*> m_hitVec;
+	Vector<Armature*> m_buffVec;
+	Vector<DeBuff*> m_debuffVec;
 };
 
 #endif

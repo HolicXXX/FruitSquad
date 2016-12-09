@@ -1,11 +1,9 @@
 #ifndef _GAME_SCENE_H_
 #define _GAME_SCENE_H_
 
-#include "cocos2d.h"
-#include "HeroSelectLayer.h"
-#include "cocostudio/CocoStudio.h"
 #include "HeroBase.h"
 #include "EnemyBase.h"
+#include "HeroSelectLayer.h"
 #include "UIButton.h"
 #include "SkillButton.h"
 #include "HPBottle.h"

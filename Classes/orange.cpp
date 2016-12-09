@@ -1,6 +1,7 @@
 #include "orange.h"
 #include "orangeSkill.h"
 #include "TargetManger.h"
+#include "BoxCullisionManager.h"
 
 orange* orange::create()
 {
@@ -23,9 +24,11 @@ bool orange::init()
 	//data
 	setName("orange");
 	m_hpMax = m_hp = 1000;
+	m_attDemage = 60;
+	m_hitSpeed = 10;
 	resetHPBar();
 
-	m_attackCircleR = 150;
+	m_attackCircleR = 200;
 	initAttCircle();
 
 	initAni();
@@ -40,26 +43,35 @@ void orange::initAttCircle()
 	this->addChild(m_attCircle);
 }
 
-void orange::useSkill()
+bool orange::useSkill()
 {
-	this->setBaseState(SKILL);
+	if (m_target && m_target->isAlive())
+	{
+		this->setBaseState(SKILL);
+		return true;
+	}
+	return false;
 }
 
 void orange::checkTargetPos()
 {
+	if (m_baseState == HeroState::SKILL)
+	{
+		return;
+	}
 	if (m_target)
 	{
 		auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2::ZERO));
-		if (dir.length() > m_attackCircleR)
+		if (dir.length() > m_attackCircleR || m_target->isAlive() == false)
 		{
 			m_target = nullptr;
 			if (m_baseState != WALK)
 			{
 				setBaseState(WALK);
 			}
-			return;
+			m_target = TargetManager::getInstance()->getEnemyTarget(this);
 		}
-		if (m_baseState != HeroState::ATTACK)
+		if (m_baseState != HeroState::ATTACK && m_target)
 		{
 			setBaseState(HeroState::ATTACK);
 		}
@@ -75,9 +87,9 @@ void orange::checkTargetPos()
 	}
 	else
 	{
-		if (m_baseState != WALK)
+		if (m_baseState != HeroState::WALK && m_baseState != HeroState::STOP)
 		{
-			setBaseState(WALK);
+			setBaseState(HeroState::WALK);
 		}
 		m_target = TargetManager::getInstance()->getEnemyTarget(this);
 	}
@@ -86,6 +98,18 @@ void orange::checkTargetPos()
 void orange::update(float dt)
 {
 	checkTargetPos();
+	if (m_target && m_baseState == ATTACK)
+	{	
+		static int count = 0;
+		++count;
+		if (count >= m_hitSpeed)
+		{
+			auto arm = Armature::create("orangeBulletEff");
+			arm->getAnimation()->play("orangeBulletEff");
+			m_target->getHit(arm, m_attDemage);
+			count = 0;
+		}
+	}
 	if (m_speed != 0 && m_dir != Vec2::ZERO)
 	{
 		this->setPosition(this->getPosition() + m_dir * m_speed);
@@ -113,10 +137,10 @@ void orange::aniCallFunc(Armature *armature, MovementEventType movementType, con
 		{
 			auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2::ZERO)).getNormalized();
 			auto skill = orangeSkill::create(m_level, dir);
-			skill->setBox();
-			skill->setPosition(this->getPosition());
 			this->getParent()->addChild(skill, this->getZOrder());
-			//add to manager
+			skill->setPosition(this->getPosition());
+			skill->setBox();
+			BoxCullisionManager::getInstance()->addHeroBox(skill);
 			skill->scheduleUpdate();
 			this->setBaseState(m_preState);
 		}

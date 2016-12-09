@@ -9,6 +9,7 @@ public:
 	static BoxTool* getInstance();
 
 	cocos2d::Rect getBox(const std::vector<cocos2d::Vec2> & p);
+	cocos2d::Rect getBox(cocos2d::Vec2 pos, float rotation,cocos2d::Size ori);
 private:
 	BoxTool();
 	~BoxTool();

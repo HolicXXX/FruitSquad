@@ -10,7 +10,7 @@ public:
 	virtual bool init();
 
 	virtual void initAttCircle();
-	virtual void useSkill();
+	virtual bool useSkill();
 	virtual void initAni();
 	virtual void playAnimation(const std::string & name);
 	virtual std::string getAnimationName();

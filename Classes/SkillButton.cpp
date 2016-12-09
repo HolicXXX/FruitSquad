@@ -61,12 +61,10 @@ void SkillButton::resetButton()
 		lis->onTouchEnded = [this](Touch* t, Event* e)->void{
 			auto pos = m_skill->convertTouchToNodeSpace(t);
 			auto rc = Rect{ Vec2::ZERO, m_skill->getContentSize() };
-			if (rc.containsPoint(pos))
+			if (rc.containsPoint(pos) && m_callback())
 			{
 				m_state = CD;
 				resetTexture();
-				//use skill
-				m_callback();
 			}
 			m_skill->setScale(1.0f);
 		};

@@ -1,7 +1,4 @@
 #include "LoadingScene.h"
-#include "cocostudio/CocoStudio.h"
-USING_NS_CC;
-using namespace cocostudio;
 #include "AnimationManager.h"
 
 LoadingScene* LoadingScene::create()

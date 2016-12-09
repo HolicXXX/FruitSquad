@@ -1,12 +1,15 @@
 #include "GameScene.h"
 #include "orange.h"
 #include "scarab.h"
-#include "AnimationManager.h"
 #include "GameMenuLayer.h"
 #include "LoadingScene.h"
 #include "LevelSelectedScene.h"
+
+#include "AnimationManager.h"
 #include "DataManager.h"
 #include "TargetManger.h"
+#include "MapManager.h"
+#include "BoxCullisionManager.h"
 
 Scene* GameScene::createScene()
 {
@@ -40,7 +43,8 @@ bool GameScene::init()
 	initEnemys();
 	//scale
 	{
-		auto scale = ((m_mapSize.width / size.width) < (m_mapSize.height / size.height)) ? (m_mapSize.width / size.width) : (m_mapSize.height / size.height);
+		auto msize = MapManager::getInstance()->getMapSize();
+		auto scale = ((msize.width / size.width) < (msize.height / size.height)) ? (msize.width / size.width) : (msize.height / size.height);
 		m_map->setScale(1 / scale);
 		m_previewScale = 1 / scale;
 	}
@@ -57,41 +61,40 @@ void GameScene::initMap()
 	auto size = Director::getInstance()->getVisibleSize();
 	//data
 	m_map = TMXTiledMap::create("gamescene/map/level_01.tmx");
+	MapManager::getInstance()->registMap(m_map);
 	auto decoration = Sprite::create("gamescene/map/level_01.png");
 	decoration->setAnchorPoint(Vec2::ZERO);
 	m_map->addChild(decoration);
 	this->addChild(m_map);
-
+	auto msize = MapManager::getInstance()->getMapSize();
 	//map drag
 	auto lis = EventListenerTouchOneByOne::create();
 	lis->onTouchBegan = [this](Touch* t, Event* e)->bool{
 		return true;
 	};
-	lis->onTouchMoved = [this,size](Touch* t, Event* e)->void{
+	lis->onTouchMoved = [this,size,msize](Touch* t, Event* e)->void{
 		auto nextPos = m_map->getPosition() + t->getDelta();
 		if (nextPos.x >= 0)
 		{
 			nextPos.x = 0;
 		}
-		else if (nextPos.x <= size.width - m_mapSize.width * m_previewScale)
+		else if (nextPos.x <= size.width - msize.width * m_previewScale)
 		{
-			nextPos.x = size.width - m_mapSize.width * m_previewScale;
+			nextPos.x = size.width - msize.width * m_previewScale;
 		}
 		if (nextPos.y >= 0)
 		{
 			nextPos.y = 0;
 		}
-		else if (nextPos.y <= size.height - m_mapSize.height * m_previewScale)
+		else if (nextPos.y <= size.height - msize.height * m_previewScale)
 		{
-			nextPos.y = size.height - m_mapSize.height * m_previewScale;
+			nextPos.y = size.height - msize.height * m_previewScale;
 		}
 		this->m_map->setPosition(nextPos);
 	};
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, m_map);
 
 	auto obj = m_map->getObjectGroup("sign");
-	auto mapsize = Size(m_map->getMapSize().width * m_map->getTileSize().width, m_map->getMapSize().height * m_map->getTileSize().height);
-	m_mapSize = mapsize;
 	auto start = obj->getObject("start");
 	//portal
 	m_portal = Node::create();
@@ -485,5 +488,10 @@ void GameScene::update(float dt)
 	for (auto h : m_heros)
 	{
 		h->pointCheck();
+	}
+	auto hbvec = BoxCullisionManager::getInstance()->m_heroBox;
+	for (auto hb : hbvec)
+	{
+		BoxCullisionManager::getInstance()->hitEnemy(hb);
 	}
 }

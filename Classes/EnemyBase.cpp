@@ -1,4 +1,5 @@
 #include "EnemyBase.h"
+#include "TargetManger.h"
 #include "ui/UILoadingBar.h"
 using namespace ui;
 
@@ -16,6 +17,48 @@ bool EnemyBase::init()
 	m_tomb->setVisible(false);
 
 	return true;
+}
+
+void EnemyBase::getHit(Armature* eff, float demage)
+{
+	this->addChild(eff);
+	m_hitVec.pushBack(eff);
+	this->runAction(Sequence::create(TintTo::create(0.01f, Color3B(255, 0, 0)), TintTo::create(0.01f, Color3B(255, 255, 255)), nullptr));
+	eff->getAnimation()->setMovementEventCallFunc(
+		[this, demage](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
+		if (movementType == LOOP_COMPLETE)
+		{
+			if (this->isAlive() == true)
+				this->hpDown(demage);
+			m_hitVec.eraseObject(armature);
+			armature->removeFromParent();
+		}
+	});
+}
+
+void EnemyBase::getDeBuff(DeBuff* debuff)
+{
+	bool isfind = false;
+	for (auto d : m_debuffVec)
+	{
+		if (debuff->effName.compare(d->effName) == 0 && d->eff != nullptr)
+		{
+			isfind = true;
+			break;
+		}
+	}
+	if (!isfind)
+	{
+		m_debuffVec.pushBack(debuff);
+		debuff->bindDemageCallBack(CC_CALLBACK_1(EnemyBase::hpDown, this));
+		debuff->scheduleUpdate();
+		this->addChild(debuff);
+	}
+}
+
+void EnemyBase::getBuff(Armature* eff, BuffType type, float time, float percent)
+{
+
 }
 
 void EnemyBase::pauseAll()
@@ -38,14 +81,22 @@ void EnemyBase::hpDown(float d)
 	if (m_hp < 0)
 	{
 		m_hp = 0;
+		m_ani->setOpacity(0);
 		m_tomb->setVisible(true);
-		//
+		this->unscheduleUpdate();
+		for (auto h : m_hitVec)
+		{
+			h->removeFromParent();
+		}
+		m_hitVec.clear();
+		TargetManager::getInstance()->eraseEnemy(this);
+		//gold add ani
 	}
 	else if (m_hp > m_hpMax)
 	{
 		m_hp = m_hpMax;
 	}
-	void resetHPBar();
+	resetHPBar();
 }
 
 void EnemyBase::resetHPBar()
@@ -54,7 +105,7 @@ void EnemyBase::resetHPBar()
 	{
 		m_hpBar = Node::create();
 		m_hpBar->setCascadeOpacityEnabled(true);
-		//m_hpBar->setOpacity(0);
+		m_hpBar->setOpacity(0);
 		auto bg = Sprite::create("gamescene/hero/hp_bar_bg.png");
 		bg->setTag(1);
 		m_hpBar->addChild(bg);
@@ -68,5 +119,9 @@ void EnemyBase::resetHPBar()
 		return;
 	}
 	auto percent = m_hp / m_hpMax * 100;
+	if (percent <= 0)
+	{
+		m_hpBar->setOpacity(0);
+	}
 	static_cast<LoadingBar*>(m_hpBar->getChildByTag(2))->setPercent(percent);
 }
