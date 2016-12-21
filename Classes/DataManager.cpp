@@ -1,4 +1,6 @@
 #include "DataManager.h"
+#include "cocos2d.h"
+USING_NS_CC;
 
 static DataManager* _datamanager = nullptr;
 
@@ -20,6 +22,7 @@ DataManager::DataManager()
 	m_heroNames.push_back("evilapple");
 
 	m_gold = 0;
+	m_mapLevel = 1;
 	m_addGold = nullptr;
 }
 
@@ -54,6 +57,7 @@ void DataManager::addGold(int g)
 	{
 		m_gold += g;
 		m_addGold(g);
+		NotificationCenter::getInstance()->postNotification("resetLevelUpButton");
 	}
 }
 void DataManager::costGold(int g)
@@ -62,5 +66,6 @@ void DataManager::costGold(int g)
 	{
 		m_gold -= g;
 		m_costGold(g);
+		NotificationCenter::getInstance()->postNotification("resetLevelUpButton");
 	}
 }

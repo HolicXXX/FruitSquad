@@ -4,7 +4,7 @@
 #include "cocos2d.h"
 #include "LevelStar.h"
 
-enum ButtonState
+enum PointState
 {
 	DISABLE,
 	ABLE,
@@ -22,11 +22,11 @@ public:
 	void pass(int starNum);
 	void setNormal();
 	void setSelected();
-	void setState(ButtonState state);
-	ButtonState getState(){ return m_state; }
+	void setState(PointState state);
+	PointState getState(){ return m_state; }
 	int getLevel(){ return m_level; }
 private:
-	ButtonState m_state;
+	PointState m_state;
 	std::vector<std::string> m_textureStr;
 	int m_level;
 	cocos2d::Label* m_levelNum;

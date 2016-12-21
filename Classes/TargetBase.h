@@ -21,7 +21,7 @@ public:
 	virtual void resumeAll() = 0;
 	virtual void getHit(Armature* eff, float demage) = 0;
 	virtual void getDeBuff(DeBuff* debuff) = 0;
-	virtual void getBuff(Armature* eff, BuffType type, float time, float percent = 0) = 0;
+	virtual void getBuff(Buff* buff) = 0;
 	virtual void hpDown(float d) = 0;
 	virtual void resetHPBar() = 0;
 
@@ -44,7 +44,7 @@ protected:
 	float m_attackCircleR;
 
 	Vector<Armature*> m_hitVec;
-	Vector<Armature*> m_buffVec;
+	Vector<Buff*> m_buffVec;
 	Vector<DeBuff*> m_debuffVec;
 };
 

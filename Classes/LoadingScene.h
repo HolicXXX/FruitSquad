@@ -3,17 +3,31 @@
 
 #include "cocos2d.h"
 
+enum NextSceneType
+{
+	POINT_LELECT_SCENE,
+	GAME_SCENE
+};
+
 class LoadingScene : public cocos2d::Layer
 {
 public:
 	static LoadingScene* create();
 	virtual bool init();
+	virtual void onExit();
+	virtual void onEnterTransitionDidFinish();
 
 	virtual void update(float dt);
+	void setNextSceneAni(NextSceneType type, int num);
 	void bindNextSceneCallBack(const std::function<cocos2d::Scene*()>& func){ m_callback = func; };
+	void aniLoadtCallBack(float);
 private:
 	std::function<cocos2d::Scene*()> m_callback;
-	float m_delay;
+
+	bool m_loadNext;
+	NextSceneType m_nextSceneType;
+	int m_nextSceneAniCountMax;
+	int m_nextSceneAniCount;
 
 	cocos2d::Label* m_text;
 

@@ -2,6 +2,8 @@
 #include "ui/UILoadingBar.h"
 USING_NS_CC;
 using namespace ui;
+#include "DataManager.h"
+#include "JsonTool.h"
 
 HPBottle* HPBottle::create()
 {
@@ -22,7 +24,7 @@ bool HPBottle::init()
 		return false;
 	}
 	this->setCascadeOpacityEnabled(true);
-	m_num = 3;
+	m_maxnum = m_num = JsonTool::getInstance()->getDoc()["hpbottlemax"].GetInt();
 	m_cdTime = 5.0f;
 	m_stateName = "01";
 
@@ -37,6 +39,10 @@ void HPBottle::initBG()
 	m_bg = Sprite::create(StringUtils::format("%s%s_normal.png", fileStr.c_str(), m_stateName.c_str()));
 	m_bg->setTag(1);
 	this->addChild(m_bg);
+	m_label = Label::createWithBMFont("fonts/ui_mid.fnt", StringUtils::format("%d/%d", m_num,m_maxnum));
+	m_label->setTag(2);
+	this->addChild(m_label);
+
 
 	auto lis = EventListenerTouchOneByOne::create();
 	lis->setSwallowTouches(true);
@@ -58,9 +64,12 @@ void HPBottle::initBG()
 			if (m_num == 0)
 			{
 				m_stateName = "02";
-				//if(gold < 200)
-				//m_bg->setTexture(StringUtils::format("%s%s_normal.png", fileStr.c_str(), m_stateName.c_str()));
-				//return;
+				auto gold = DataManager::getInstance()->getGoldNum();
+				if (gold < 200)
+				{
+					m_bg->setTexture(StringUtils::format("%s%s_normal.png", fileStr.c_str(), m_stateName.c_str()));
+					return;
+				}
 			}
 			else
 			{
@@ -68,27 +77,20 @@ void HPBottle::initBG()
 				m_stateName = (m_num == 0) ? ("02") : ("01");
 				
 			}
-			//m_num--;
-			//if (m_num <= 0)
-			//{
-			//	m_num = 0;
-			//	m_stateName = "02";
-			//	//if(gold < 200)
-			//	//m_bg->setTexture(StringUtils::format("%s%s_normal.png", fileStr.c_str(), m_stateName.c_str()));
-			//	//return;
-			//}
-			//auto act = ProgressFromTo::create(m_cdTime, 100.0f, 0.0f);
-			//m_isCD = true;
-			//auto cd = static_cast<ProgressTimer*>(m_cd->getChildByName("pt"));
-			//cd->runAction(Sequence::create(act,
-			//	CallFunc::create([this]()->void{
-			//	m_isCD = false;
-			//}), nullptr));
 			auto cd = static_cast<LoadingBar*>(m_cd->getChildByTag(1));
 			m_isCD = true;
 			cd->setPercent(100.0f);
 			this->scheduleUpdate();
 			m_callback();
+		}
+		if (m_num > 0)
+		{
+			m_label->setString(StringUtils::format("%d/%d", m_num, m_maxnum));
+			m_label->setVisible(true);
+		}
+		else
+		{
+			m_label->setVisible(false);
 		}
 		m_bg->setTexture(StringUtils::format("%s%s_normal.png", fileStr.c_str(), m_stateName.c_str()));
 	};
@@ -104,12 +106,6 @@ void HPBottle::initCD()
 	cd->setTag(1);
 	m_cd->addChild(cd);
 	
-	/*auto cd = ProgressTimer::create(Sprite::create("gamescene/ui/hpbottle_cd.png"));
-	cd->setName("pt");
-	cd->setType(ProgressTimer::Type::RADIAL);
-	cd->setPercentage(0);
-	cd->setTag(1);
-	m_cd->addChild(cd);*/
 	this->addChild(m_cd);
 }
 

@@ -18,10 +18,13 @@ private:
 	
 	cocos2d::Node* m_type;
 	cocos2d::Sprite* m_model;
-	//need a label
+	cocos2d::Label* m_nameText;
 
 	void setModel();
 	void setButton();
+
+	void levelUpEff();
+	void levelResetEff();
 };
 
 

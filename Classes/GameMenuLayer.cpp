@@ -1,5 +1,8 @@
 #include "GameMenuLayer.h"
 USING_NS_CC;
+#include "JsonTool.h"
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
 
 GameMenuLayer* GameMenuLayer::create()
 {
@@ -73,31 +76,53 @@ void GameMenuLayer::initRetry()
 
 void GameMenuLayer::initSound()
 {
+	auto ison = JsonTool::getInstance()->getDoc()["sound"].GetBool();
 	//data
-	m_sound = UIButton::create(ButtonType::MENU_SOUND_ON);
-	m_sound->bindCallBack([]()->void{
-		//sound on - off
-		CCLOG("sound on callback");
-	});
-	m_sound->bindSecCallBack([]()->void{
-		//sound off - on
-		CCLOG("sound off callback");
-	});
+	auto on_offCallBack = []()->void{
+		JsonTool::getInstance()->getDoc()["sound"].SetBool(false);
+		if (SimpleAudioEngine::getInstance()->isBackgroundMusicPlaying())
+			SimpleAudioEngine::getInstance()->stopBackgroundMusic();
+	};
+	auto off_onCallBack = []()->void{
+		JsonTool::getInstance()->getDoc()["sound"].SetBool(true);
+	};
+	if (ison)
+	{
+		m_sound = UIButton::create(ButtonType::MENU_SOUND_ON);
+		m_sound->bindCallBack(on_offCallBack);
+		m_sound->bindSecCallBack(off_onCallBack);
+	}
+	else
+	{
+		m_sound = UIButton::create(ButtonType::MENU_SOUND_OFF);
+		m_sound->bindCallBack(off_onCallBack);
+		m_sound->bindSecCallBack(on_offCallBack);
+	}
 	m_sound->setPosition(425, 73);
 	m_bg->addChild(m_sound);
 }
 
 void GameMenuLayer::initMusic()
 {
-	m_music = UIButton::create(ButtonType::MENU_MUSIC_ON);
-	m_music->bindCallBack([]()->void{
-		//music on - off
-		CCLOG("music on callback");
-	});
-	m_music->bindSecCallBack([]()->void{
-		//music off - on
-		CCLOG("music off callback");
-	});
+	auto ison = JsonTool::getInstance()->getDoc()["music"].GetBool();
+	auto on_offCallBack = []()->void{
+		JsonTool::getInstance()->getDoc()["music"].SetBool(false);
+	};
+	auto off_onCallBack = []()->void{
+		JsonTool::getInstance()->getDoc()["music"].SetBool(true);
+	};
+	if (ison)
+	{
+		m_music = UIButton::create(ButtonType::MENU_MUSIC_ON);
+		m_music->bindCallBack(on_offCallBack);
+		m_music->bindSecCallBack(off_onCallBack);
+	}
+	else
+	{
+		m_music = UIButton::create(ButtonType::MENU_MUSIC_OFF);
+		m_music->bindCallBack(off_onCallBack);
+		m_music->bindSecCallBack(on_offCallBack);
+	}
 	m_music->setPosition(538, 73);
 	m_bg->addChild(m_music);
 }

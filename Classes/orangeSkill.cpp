@@ -35,7 +35,7 @@ void orangeSkill::initEff()
 {
 	m_type = DeBuffType::BURN;
 	m_effName = "burn";
-	m_effDemage = 200;
+	m_effDemage = 200 * (int(m_level) + 1);
 	m_effTime = 5.0f;
 	m_demageTimes = 10;
 }
@@ -47,7 +47,7 @@ DeBuff* orangeSkill::getDeBuff()
 	debuff->effName = m_effName;
 	debuff->demage = m_effDemage;
 	debuff->time = m_effTime;
-	debuff->m_count = debuff->demageTimes = m_demageTimes;//init everyone
+	//m_demageTimes;//init everyone
 
 	debuff->eff = Armature::create(m_effName);
 	debuff->eff->getAnimation()->play(m_effName);
@@ -93,27 +93,12 @@ void orangeSkill::initDir()
 
 void orangeSkill::setBox()
 {
-	auto skillSize = Size(220, 250);
-	//auto p = this->getParent();
-	//std::vector<Vec2> points;
-	//auto p1 = this->convertToWorldSpace(Vec2(0 - 110, 0 - 125));//leftbottom
-	//points.push_back(p1);
-	//auto p2 = this->convertToWorldSpace(Vec2(0 + 110, 0 - 125));//rightbottom
-	//points.push_back(p2);
-	//auto p3 = this->convertToWorldSpace(Vec2(0 + 110, 0 + 125));//righttop
-	//points.push_back(p3);
-	//auto p4 = this->convertToWorldSpace(Vec2(0 - 110, 0 + 125));//lefttop
-	//points.push_back(p4);
-	//m_hitRect = BoxTool::getInstance()->getBox(points);//box on worldspace
-
+	auto skillSize = Size(220, 250 + 10 * int(m_level));
 	m_hitRect = BoxTool::getInstance()->getBox(this->getPosition(), this->getRotation(), skillSize);
 }
 
 void orangeSkill::update(float dt)
 {
-	/*auto armatureName = m_ani->getArmatureData()->name;
-	auto animationName = m_ani->getAnimation()->getCurrentMovementID();*/
-	
 	auto rc = Rect(Vec2::ZERO, MapManager::getInstance()->getMapSize());
 	if (!rc.intersectsRect(m_hitRect))
 	{

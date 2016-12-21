@@ -5,6 +5,9 @@
 USING_NS_CC;
 using namespace cocostudio;
 #include "AnimationManager.h"
+#include "JsonTool.h"
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
 
 Scene* StartScene::createScene()
 {
@@ -34,6 +37,10 @@ bool StartScene::init()
 	}
 	auto size = Director::getInstance()->getVisibleSize();
 	AnimationManager::getInstance()->loadStartSceneAni();
+	JsonTool::getInstance()->parseJson("data.json");
+	if (JsonTool::getInstance()->getDoc()["sound"].GetBool())
+		if (JsonTool::getInstance()->getDoc()["music"].GetBool())
+			SimpleAudioEngine::getInstance()->playBackgroundMusic("sound/bg.ogg", true);
 	//init sky
 	initBG();
 	//logo
@@ -89,6 +96,7 @@ bool StartScene::init()
 		auto scene = Scene::create();
 		auto l = LoadingScene::create();
 		l->bindNextSceneCallBack(LevelSelectedScene::createScene);
+		l->setNextSceneAni(NextSceneType::POINT_LELECT_SCENE, 2);
 		scene->addChild(l);
 		Director::getInstance()->replaceScene(TransitionFade::create(0.5f, scene));
 	};
@@ -98,10 +106,15 @@ bool StartScene::init()
 	return true;
 }
 
+void StartScene::onExit()
+{
+	Node::onExit();
+	AnimationManager::getInstance()->eraseStartSceneAni();
+}
+
 void StartScene::update(float dt)
 {
 	//
-
 }
 
 void StartScene::initBG()

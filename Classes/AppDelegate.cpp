@@ -79,7 +79,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
 	srand(time(0));
 	CCRANDOM_0_1();
 
-	auto scene = GameScene::createScene();
+	auto scene = StartScene::createScene();
 
     director->runWithScene(scene);
 

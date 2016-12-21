@@ -13,11 +13,13 @@ public:
 	void bindCallBack(const std::function<void()> & func){ m_callback = func; }
 private:
 	int m_num;
+	int m_maxnum;
 	std::string m_stateName;
 
 	void initBG();
 	cocos2d::Sprite* m_bg;
 	//add label
+	cocos2d::Label* m_label;
 
 	std::function<void()> m_callback;
 	

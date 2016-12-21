@@ -4,15 +4,20 @@
 #include "cocos2d.h"
 #include "TeamList.h"
 #include "MapLevelStar.h"
+#include "ItemButton.h"
+
 class HeroSelect : public cocos2d::Layer
 {
 public:
 	static HeroSelect* create();
 	virtual bool init();
+	virtual void onExit();
 
 	void bindStartCallBack(const std::function<void()> & func){ m_startcallback = func; }
 
 	virtual void update(float dt);
+
+	ItemButton* getSelectedItem(){ return m_selectedItem; }
 private:
 	cocos2d::Sprite* m_returnButton;
 	MapLevelStar* m_star;
@@ -41,6 +46,11 @@ private:
 	cocos2d::Node* m_secondPageOrigin;
 	cocos2d::Sprite* m_leftButton;
 	cocos2d::Sprite* m_rightButton;
+
+	void initItems();
+	cocos2d::Vector<ItemButton*> m_items;
+	ItemButton* m_selectedItem;
+	void setSelected(Ref* ref);
 
 
 	cocos2d::Sprite* m_wcloud1;

@@ -3,23 +3,25 @@
 
 #include "cocos2d.h"
 #include "HeroModel.h"
+#include "PropertyBox.h"
 
 class HeroHall : public cocos2d::Layer
 {
 public:
 	static HeroHall* create();
 	virtual bool init();
+	virtual void onExit();
 
 	virtual void update(float dt);
 private:
 	void initHeroIcon();
-	void setPropertyBox();
 
 	HeroModel* m_heroModel;
 
 	cocos2d::Sprite* m_returnButton;
 
 	cocos2d::Node* m_fruits;
+	void fruitDown(Ref*);
 	cocos2d::Node* m_gems;
 
 	cocos2d::Node* m_focus;
@@ -31,7 +33,9 @@ private:
 	cocos2d::Sprite* m_leftButton;
 	cocos2d::Sprite* m_rightButton;
 
-	cocos2d::Node* m_propertyBox;
+	void initPropertyBox();
+	PropertyBox* m_property;
+	void resetCallBack(Ref*);
 
 	cocos2d::Sprite* m_wcloud1;
 	cocos2d::Sprite* m_wcloud2;

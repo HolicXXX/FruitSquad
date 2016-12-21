@@ -16,6 +16,7 @@ bool HeroBase::init()
 	m_name = "";
 	m_currentAni = "";
 	m_target = nullptr;
+	m_cameraMove = nullptr;
 
 	initMoveSpeed();
 
@@ -66,24 +67,49 @@ void HeroBase::setRight(bool b)
 
 void HeroBase::hpDown(float d)
 {
-	m_hp -= d;
-	if (m_hp < 0)
+	if (d > 0)
+	{
+		float demagePercent = 1;
+		for (auto b : m_buffVec)
+		{
+			if (b->type == BuffType::DEMAGE_AVOID)
+				demagePercent *= ((100 - b->buffNum) / 100);
+		}
+		m_hp -= d * demagePercent;
+	}
+	else
+	{
+		m_hp -= d / 100.0f * m_hpMax;
+	}
+	if (m_hp <= 0)
 	{
 		m_hp = 0;
 		m_ani->setOpacity(0);
+		m_hpBar->setOpacity(0);
 		for (auto h : m_hitVec)
 		{
-			h->removeFromParent();
+			h->setOpacity(0);
 		}
 		m_hitVec.clear();
+		for (auto d : m_debuffVec)
+		{
+			d->setOpacity(0);
+		}
+		m_debuffVec.clear();
+		for (auto b : m_buffVec)
+		{
+			b->setOpacity(0);
+		}
+		m_buffVec.clear();
+		this->unscheduleUpdate();
 		TargetManager::getInstance()->eraseHero(this);
+		NotificationCenter::getInstance()->postNotification("addDeathCount");
 		//more TODO
 	}
 	else if (m_hp > m_hpMax)
 	{
 		m_hp = m_hpMax;
 	}
-	//
 	resetHPBar();
 }
 
@@ -91,6 +117,15 @@ void HeroBase::levelUp()
 {
 	if (m_level == HIGH)
 		return;
+	auto arm = Armature::create("upgrade");
+	arm->getAnimation()->play("upgrade");
+	arm->getAnimation()->setMovementEventCallFunc([](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
+		if (movementType == LOOP_COMPLETE)
+		{
+			armature->removeFromParent();
+		}
+	});
+	this->addChild(arm);
 	m_level = Level(int(m_level) + 1);
 }
 
@@ -125,37 +160,98 @@ void HeroBase::getHit(Armature* eff, float demage)
 {
 	this->addChild(eff);
 	m_hitVec.pushBack(eff);
+	this->hpDown(demage);
 	eff->getAnimation()->setMovementEventCallFunc(
 		[this, demage,eff](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
 		if (movementType == LOOP_COMPLETE)
 		{
-			this->hpDown(demage);
 			m_hitVec.eraseObject(armature);
 			eff->removeFromParent();
 		}
 	});
 }
 
-void HeroBase::getDeBuff(DeBuff* debuff)
-{
 
+void HeroBase::eraseDebuff(DeBuff* d)
+{
+	if (this->isAlive())
+		m_debuffVec.eraseObject(d);
 }
 
-void HeroBase::getBuff(Armature* eff, BuffType type, float time, float percent)
+void HeroBase::eraseBuff(Buff* b)
 {
+	if (this->isAlive())
+		m_buffVec.eraseObject(b);
+}
 
+void HeroBase::getDeBuff(DeBuff* debuff)
+{
+	bool isfind = false;
+	for (auto d : m_debuffVec)
+	{
+		if (debuff->effName.compare(d->effName) == 0 && debuff->type == d->type)
+		{
+			isfind = true;
+			break;
+		}
+	}
+	if (!isfind)
+	{
+		m_debuffVec.pushBack(debuff);
+		debuff->bindDemageCallBack(CC_CALLBACK_1(HeroBase::hpDown, this));
+		debuff->bindEraseDebuffCallBack(CC_CALLBACK_1(HeroBase::eraseDebuff, this));
+		debuff->scheduleUpdate();
+		this->addChild(debuff);
+	}
+}
+
+void HeroBase::getBuff(Buff* buff)
+{
+	bool isfind = false;
+	for (auto b : m_buffVec)
+	{
+		if (buff->effName.compare(b->effName) == 0 && buff->type == b->type)
+		{
+			isfind = true;
+			break;
+		}
+	}
+	if (!isfind)
+	{
+		m_buffVec.pushBack(buff);
+		buff->bindHealCallBack(CC_CALLBACK_1(HeroBase::hpDown, this));
+		buff->bindEraseBuffCallBack(CC_CALLBACK_1(HeroBase::eraseBuff, this));
+		buff->scheduleUpdate();
+		this->addChild(buff);
+	}
 }
 
 void HeroBase::pauseAll()
 {
 	setBaseState(STOP);
 	this->unscheduleUpdate();
+	for (auto d : m_debuffVec)
+	{
+		d->unscheduleUpdate();
+	}
+	for (auto b : m_buffVec)
+	{
+		b->unscheduleUpdate();
+	}
 }
 
 void HeroBase::resumeAll()
 {
 	setBaseState(m_preState);
 	this->scheduleUpdate();
+	for (auto d : m_debuffVec)
+	{
+		d->scheduleUpdate();
+	}
+	for (auto b : m_buffVec)
+	{
+		b->scheduleUpdate();
+	}
 }
 
 void HeroBase::pointCheck()

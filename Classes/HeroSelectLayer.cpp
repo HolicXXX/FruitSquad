@@ -62,6 +62,7 @@ bool HeroSelect::init()
 				auto scene = Scene::create();
 				auto load = LoadingScene::create();
 				load->bindNextSceneCallBack(LevelSelectedScene::createScene);
+				load->setNextSceneAni(NextSceneType::POINT_LELECT_SCENE, 2);
 				scene->addChild(load);
 				Director::getInstance()->replaceScene(TransitionMoveInL::create(0.5f, scene));
 			}
@@ -91,6 +92,12 @@ bool HeroSelect::init()
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, this);
 	this->scheduleUpdate();
 	return true;
+}
+
+void HeroSelect::onExit()
+{
+	Node::onExit();
+	NotificationCenter::getInstance()->removeAllObservers(this);
 }
 
 void HeroSelect::initHeroIcon()
@@ -133,8 +140,8 @@ void HeroSelect::initHeroIcon()
 	{
 		auto node = Node::create();
 		//data
-		auto state = std::string();
-		if (i == 0)
+		std::string state = "";
+		if (i < 3)
 		{
 			state = "normal";
 		}
@@ -262,7 +269,7 @@ void HeroSelect::initHeroIcon()
 					m_focus = p1;
 					m_focus->getChildByTag(2)->setVisible(true);
 					//list add
-					if (m_focus->getTag() <= 0)//data 0
+					if (m_focus->getTag() <= 2)//data 0
 					{
 						m_teamList->addHero(m_focus->getTag());
 						setStartButtonState(m_teamList->isFull());
@@ -382,10 +389,10 @@ void HeroSelect::initItemBG()
 	//star
 	m_star = MapLevelStar::create();
 	m_star->setPosition(0, bg->getContentSize().height / 2);
-	m_star->setStarNum(3);
+	//m_star->setStarNum(3);
 	m_itemSelect->addChild(m_star);
 	//items
-
+	initItems();
 	//preview button
 	m_previewButton = Sprite::create("gamescene/preview.png");
 	m_previewButton->setPosition(bg->getContentSize().width / 4, bg->getContentSize().height / 4);
@@ -420,6 +427,58 @@ void HeroSelect::initItemBG()
 
 	m_itemSelect->setPosition(size.width / 5 * 4, size.height / 2);
 	this->addChild(m_itemSelect);
+}
+
+void HeroSelect::initItems()
+{
+	m_selectedItem = nullptr;
+	auto bg = static_cast<Sprite*>(m_itemSelect->getChildByTag(1));
+	//boom
+	auto boom = ItemButton::create(ButtonRole::SELECT, ItemType::I_BOOM);
+	boom->setPosition(74, 170);
+	boom->setSelected(false);
+	bg->addChild(boom);
+	m_items.pushBack(boom);
+	//angel
+	auto angel = ItemButton::create(ButtonRole::SELECT, ItemType::I_ANGEL);
+	angel->setPosition(178, 170);
+	angel->setSelected(false);
+	bg->addChild(angel);
+	m_items.pushBack(angel);
+	//froze
+	auto frozen = ItemButton::create(ButtonRole::SELECT, ItemType::I_FROZEN);
+	frozen->setPosition(285, 170);
+	frozen->setSelected(false);
+	bg->addChild(frozen);
+	m_items.pushBack(frozen);
+	//buff
+	auto buff = ItemButton::create(ButtonRole::SELECT, ItemType::I_BUFF);
+	buff->setPosition(124, 67);
+	buff->setSelected(false);
+	bg->addChild(buff);
+	m_items.pushBack(buff);
+	//dragon
+	auto dragon = ItemButton::create(ButtonRole::SELECT, ItemType::I_DRAGON);
+	dragon->setPosition(229, 67);
+	dragon->setSelected(false);
+	bg->addChild(dragon);
+	m_items.pushBack(dragon);
+	NotificationCenter::getInstance()->addObserver(this, SEL_CallFuncO(&HeroSelect::setSelected), "selectItem", nullptr);
+}
+
+void HeroSelect::setSelected(Ref* ref)
+{
+	auto i = static_cast<ItemButton*>(ref);
+	if (i == m_selectedItem)
+	{
+		m_selectedItem = nullptr;
+	}
+	else
+	{
+		if (m_selectedItem)
+			m_selectedItem->setSelected(false);
+		m_selectedItem = i;
+	}
 }
 
 void HeroSelect::initStartButton()

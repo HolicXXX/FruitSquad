@@ -9,6 +9,7 @@ public:
 	static cocos2d::Scene* createScene();
 	static StartScene* create();
 	virtual bool init();
+	virtual void onExit();
 
 	virtual void update(float dt);
 private:

@@ -3,6 +3,13 @@
 #include "SeasonLayer.h"
 #include "HeroHallLayer.h"
 USING_NS_CC;
+#include "JsonTool.h"
+#include "DataManager.h"
+#include "GameScene.h"
+#include "LoadingScene.h"
+#include "AnimationManager.h"
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
 
 Scene* LevelSelectedScene::createScene()
 {
@@ -31,6 +38,12 @@ bool LevelSelectedScene::init()
 		return false;
 	}
 	auto size = Director::getInstance()->getVisibleSize();
+
+	if (JsonTool::getInstance()->getDoc()["sound"].GetBool())
+		if (JsonTool::getInstance()->getDoc()["music"].GetBool())
+			if (!SimpleAudioEngine::getInstance()->isBackgroundMusicPlaying())
+				SimpleAudioEngine::getInstance()->playBackgroundMusic("sound/bg.ogg", true);
+
 	m_focus = nullptr;
 	//init background
 	m_background = Sprite::create("levelselectscene/spring_bg.png");
@@ -51,7 +64,17 @@ bool LevelSelectedScene::init()
 	m_heroHallLayer = HeroHall::create();
 	this->addChild(m_heroHallLayer);
 
+	m_shopLayer = ShopLayer::create();
+	this->addChild(m_shopLayer);
+
 	return true;
+}
+
+void LevelSelectedScene::onExit()
+{
+	JsonTool::getInstance()->saveJson();
+	AnimationManager::getInstance()->eraseLevelSelectSceneAni();
+	Node::onExit();
 }
 
 void LevelSelectedScene::update(float dt)
@@ -173,7 +196,11 @@ void LevelSelectedScene::initLevelButton()
 	m_cliping->addChild(m_secondMid);
 	for (int i = 0; i < 15; i++)
 	{
+		auto state = JsonTool::getInstance()->getDoc()["springlevels"][i]["state"].GetInt();
 		auto button = LevelButton::create(i + 1);
+		if (state == 2)
+			button->pass(JsonTool::getInstance()->getDoc()["springlevels"][i]["star"].GetInt());
+		button->setState(PointState(state));
 		auto x = i % 5;
 		auto y = i / 5;
 		auto offsetX = (x >= 2) ? (x == 2 ? 0 : ((x - 2) * 120)) : ((2 - x) * -120);
@@ -184,7 +211,11 @@ void LevelSelectedScene::initLevelButton()
 	}
 	for (int i = 15; i < 30; i++)
 	{
+		auto state = JsonTool::getInstance()->getDoc()["springlevels"][i]["state"].GetInt();
 		auto button = LevelButton::create(i + 1);
+		if (state == 2)
+			button->pass(JsonTool::getInstance()->getDoc()["springlevels"][i]["star"].GetInt());
+		button->setState(PointState(state));
 		auto x = (i - 15) % 5;
 		auto y = (i - 15) / 5;
 		auto offsetX = (x >= 2) ? (x == 2 ? 0 : ((x - 2) * 120)) : ((2 - x) * -120);
@@ -208,7 +239,7 @@ void LevelSelectedScene::initLevelButton()
 					auto buttonRc = Rect{ Vec2(-b1->getButtonSize().width / 2, -b1->getButtonSize().height / 2), b1->getButtonSize() };
 					if (buttonRc.containsPoint(pos))
 					{
-						if (b1->getState() != ButtonState::DISABLE)
+						if (b1->getState() != PointState::DISABLE)
 						{
 							if (m_focus)
 							{
@@ -229,7 +260,7 @@ void LevelSelectedScene::initLevelButton()
 					auto buttonRc = Rect{ Vec2(-b2->getButtonSize().width / 2, -b2->getButtonSize().height / 2), b2->getButtonSize() };
 					if (buttonRc.containsPoint(pos))
 					{
-						if (b2->getState() != ButtonState::DISABLE)
+						if (b2->getState() != PointState::DISABLE)
 						{
 							if (m_focus)
 							{
@@ -312,11 +343,12 @@ void LevelSelectedScene::initLevelButton()
 				auto buttonRc = Rect{ Vec2(-buttonSize.width / 2, -buttonSize.height / 2), buttonSize };
 				if (buttonRc.containsPoint(pos))
 				{
-					if (b1->getState() != ButtonState::DISABLE)
+					if (b1->getState() != PointState::DISABLE)
 					{
 						b1->setNormal();
 						m_focus = b1;
-						//callback
+						DataManager::getInstance()->setMapLevel(b1->getLevel());
+						gameStart();
 					}
 					break;
 				}
@@ -331,11 +363,12 @@ void LevelSelectedScene::initLevelButton()
 				auto buttonRc = Rect{ Vec2(-buttonSize.width / 2, -buttonSize.height / 2), buttonSize };
 				if (buttonRc.containsPoint(pos))
 				{
-					if (b2->getState() != ButtonState::DISABLE)
+					if (b2->getState() != PointState::DISABLE)
 					{
 						b2->setNormal();
 						m_focus = b2;
-						//callback
+						DataManager::getInstance()->setMapLevel(b2->getLevel());
+						gameStart();
 					}
 					break;
 				}
@@ -370,7 +403,10 @@ void LevelSelectedScene::initUI()
 		bg->setTag(1);
 		m_gems->addChild(bg);
 		//add label
-
+		auto gemsNum = JsonTool::getInstance()->getDoc()["gems"].GetInt();
+		auto label = Label::createWithBMFont("fonts/ui_mid.fnt", StringUtils::format("%d", gemsNum));
+		label->setTag(2);
+		m_gems->addChild(label);
 		auto button = Sprite::create("levelselectscene/button_add_normal.png");
 		button->setTag(3);
 		button->setPosition(Vec2(80, 0));
@@ -420,6 +456,10 @@ void LevelSelectedScene::initUI()
 		bg->setTag(1);
 		m_keys->addChild(bg);
 		//add label
+		auto keysNum = JsonTool::getInstance()->getDoc()["keys"].GetInt();
+		auto label = Label::createWithBMFont("fonts/ui_mid.fnt", StringUtils::format("%d", keysNum));
+		label->setTag(2);
+		m_keys->addChild(label);
 	}
 	m_keys->setPosition(350, size.height - 40);
 	this->addChild(m_keys);
@@ -434,20 +474,28 @@ void LevelSelectedScene::initUI()
 	});
 	m_heroHall = MenuItemImage::create("levelselectscene/herohall_normal.png",
 		"levelselectscene/herohall_selected.png",
-		[this](Ref*)->void{
-		auto size = Director::getInstance()->getVisibleSize();
+		[this,size](Ref*)->void{
 		m_heroHallLayer->runAction(MoveBy::create(0.5f, Vec2(0, -size.height)));
 	});
 	m_shop = MenuItemImage::create("levelselectscene/shop_normal.png",
 		"levelselectscene/shop_selected.png",
-		[this](Ref*)->void{
-		//call shoplayer
-		CCLOG("call shop");
+		[this,size](Ref*)->void{
+		m_shopLayer->runAction(MoveBy::create(0.5f, Vec2(0, size.height)));
 	});
 	auto mainMenu = Menu::create(m_seasons, m_heroHall, m_shop,nullptr);
 	mainMenu->alignItemsHorizontally();
 	mainMenu->setPosition(150, 75);
 	this->addChild(mainMenu);
 
+}
+
+void LevelSelectedScene::gameStart()
+{
+	auto scene = Scene::create();
+	auto load = LoadingScene::create();
+	load->bindNextSceneCallBack(GameScene::createScene);
+	load->setNextSceneAni(NextSceneType::GAME_SCENE, 20);
+	scene->addChild(load);
+	Director::getInstance()->replaceScene(TransitionMoveInL::create(0.5f, scene));
 }
 

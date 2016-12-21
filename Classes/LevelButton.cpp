@@ -27,7 +27,7 @@ bool LevelButton::init(int level)
 	m_textureStr.push_back("pass");
 	//base on level and data to create button and label
 	{
-		m_button = Sprite::create("levelselectscene/level_point_able_normal.png");
+		m_button = Sprite::create("levelselectscene/level_point_disable.png");
 		this->addChild(m_button);
 		m_levelNum = Label::createWithBMFont("fonts/level_number.fnt", StringUtils::format("%02d", level));
 		m_levelNum->setPosition(Vec2(-5, 0));
@@ -46,19 +46,17 @@ Size LevelButton::getButtonSize()
 
 void LevelButton::setNormal()
 {
-	//data
 	auto str = m_textureStr[int(m_state)];
 	m_button->setTexture(StringUtils::format("levelselectscene/level_point_%s_normal.png", str.c_str()));
 }
 
 void LevelButton::setSelected()
 {
-	//data
 	auto str = m_textureStr[int(m_state)];
 	m_button->setTexture(StringUtils::format("levelselectscene/level_point_%s_selected.png", str.c_str()));
 }
 
-void LevelButton::setState(ButtonState state)
+void LevelButton::setState(PointState state)
 {
 	m_state = state;
 	if (m_state == DISABLE)
@@ -79,7 +77,7 @@ void LevelButton::pass(int starNum)
 			m_star->setStarNum(starNum);
 		return;
 	}
-	setState(ButtonState::PASS);
+	setState(PointState::PASS);
 	m_star = LevelStar::create();
 	m_star->setStarNum(starNum);
 	m_star->setPosition(Vec2(0, -m_button->getContentSize().height / 2));

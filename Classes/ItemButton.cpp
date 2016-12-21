@@ -1,5 +1,6 @@
 #include "ItemButton.h"
 #include "2d/CCProgressTimer.h"
+#include "JsonTool.h"
 USING_NS_CC;
 
 ItemButton* ItemButton::create(ButtonRole r, ItemType t)
@@ -23,7 +24,12 @@ bool ItemButton::init(ButtonRole r, ItemType t)
 	this->setCascadeOpacityEnabled(true);
 	m_role = r;
 	m_type = t;
-	m_state = ItemButtonState::NORMAL;
+	//data
+	m_number = JsonTool::getInstance()->getDoc()["items"][int(m_type)]["num"].GetInt();
+	if (m_number > 0)
+		m_state = ButtonState::NORMAL;
+	else
+		m_state = ButtonState::DISABEL;
 	initName();
 
 	initItem();
@@ -46,7 +52,7 @@ void ItemButton::initItem()
 	lis->onTouchBegan = [this](Touch* t, Event* e)->bool{
 		auto pos = m_item->convertTouchToNodeSpace(t);
 		auto rc = Rect{ Vec2::ZERO, m_item->getContentSize() };
-		if (rc.containsPoint(pos) && (m_state == ItemButtonState::NORMAL))
+		if (rc.containsPoint(pos) && (m_state == ButtonState::NORMAL))
 		{
 			m_item->setScale(0.99f);
 			return true;
@@ -60,21 +66,34 @@ void ItemButton::initItem()
 		{
 			if (m_role == USE)
 			{
-				m_state = CD;
-				resetTexture();
-				auto act = ProgressFromTo::create(m_cdTime, 100.0f, 0.0f);
-				auto cd = static_cast<ProgressTimer*>(m_cd->getChildByName("pt"));
-				cd->runAction(Sequence::create(act,
-					CallFunc::create([this]()->void{
-					m_state = ItemButtonState::NORMAL;
+				if (m_number > 0)
+				{
+					m_state = CD;
 					resetTexture();
-				}), nullptr));
-				m_useCallback();
+					m_number--;
+					JsonTool::getInstance()->getDoc()["items"][int(m_type)]["num"].SetInt(m_number);
+					resetNubmerLabel();
+					auto act = ProgressFromTo::create(m_cdTime, 100.0f, 0.0f);
+					auto cd = static_cast<ProgressTimer*>(m_cd->getChildByName("pt"));
+					cd->runAction(Sequence::create(act,
+						CallFunc::create([this]()->void{
+						if (m_number > 0)
+						{
+							m_state = ButtonState::NORMAL;
+						}
+						else
+						{
+							m_state = ButtonState::DISABEL;
+						}
+						resetTexture();
+					}), nullptr));
+					m_useCallback();
+				}
 			}
 			else
 			{
-				m_isSelected = !m_isSelected;
-				m_eff->setVisible(m_isSelected);
+				setSelected(!m_isSelected);
+				NotificationCenter::getInstance()->postNotification("selectItem", this);
 			}
 		}
 		m_item->setScale(1.0f);
@@ -101,11 +120,13 @@ void ItemButton::setSelected(bool b)
 void ItemButton::initCD()
 {
 	std::string fileStr = "gamescene/skill/skill_";
+	m_cdTime = 20.0f;
 	m_cd = Node::create();
 	m_cd->setTag(2);
 	auto cd = ProgressTimer::create(Sprite::create(StringUtils::format("%scd.png", fileStr.c_str())));
 	cd->setName("pt");
 	cd->setType(ProgressTimer::Type::RADIAL);
+	cd->setReverseProgress(true);
 	cd->setPercentage(0);
 	m_cd->addChild(cd);
 	this->addChild(m_cd);
@@ -113,12 +134,19 @@ void ItemButton::initCD()
 
 void ItemButton::initNumberImage()
 {
-	//data
-	m_number = 5;
-	std::string fileStr = "gamescene/skill/skill_";
+	std::string fileStr = "gamescene/item/item_";
 	m_numberImage = Sprite::create(StringUtils::format("%snum_bg.png", fileStr.c_str()));
-	m_numberImage->setPosition(m_item->getContentSize() / 2);
+	m_numberImage->setPosition(m_item->getContentSize().width / 2 - m_numberImage->getContentSize().width / 2, -(m_item->getContentSize().height / 2 - m_numberImage->getContentSize().height / 2));
 	this->addChild(m_numberImage);
+	m_numberLabel = Label::createWithTTF(StringUtils::format("%d",m_number), "fonts/arial.ttf", 18);
+	m_numberLabel->setTextColor(Color4B::WHITE);
+	m_numberLabel->setPosition(m_numberImage->getContentSize() / 2);
+	m_numberImage->addChild(m_numberLabel);
+}
+
+void ItemButton::resetNubmerLabel()
+{
+	m_numberLabel->setString(StringUtils::format("%d", m_number));
 }
 
 void ItemButton::resetTexture()
@@ -150,27 +178,27 @@ void ItemButton::initName()
 {
 	switch (m_type)
 	{
-	case BOOM:
+	case I_BOOM:
 	{
 		m_name = "boom";
 	}
 		break;
-	case ANGEL:
+	case I_ANGEL:
 	{
 		m_name = "angel";
 	}
 		break;
-	case FROZEN:
+	case I_FROZEN:
 	{
 		m_name = "frozen";
 	}
 		break;
-	case BUFF:
+	case I_BUFF:
 	{
 		m_name = "buff";
 	}
 		break;
-	case DRAGON:
+	case I_DRAGON:
 	{
 		m_name = "dragon";
 	}
@@ -178,4 +206,9 @@ void ItemButton::initName()
 	default:
 		break;
 	}
+}
+
+void ItemButton::update(float dt)
+{
+
 }

@@ -22,13 +22,14 @@ BoxTool* BoxTool::getInstance()
 Rect BoxTool::getBox(Vec2 pos, float rotation, Size ori)
 {
 	Rect ret = {};
-	auto r = abs(rotation);
-	if (r > 90)
+	auto r = CC_DEGREES_TO_RADIANS(abs(rotation));
+	auto pi = CC_DEGREES_TO_RADIANS(180);
+	if (r > pi / 2)
 	{
-		ret.size.width = sinf(r) * ori.width + cosf(r) * ori.height;
-		ret.size.height = cosf(r) * ori.width + sinf(r) * ori.height;
+		ret.size.width = sinf(r) * ori.width + -cosf(r) * ori.height;
+		ret.size.height = -cosf(r) * ori.width + sinf(r) * ori.height;
 	}
-	else if (r < 90)
+	else if (r < pi / 2)
 	{
 		ret.size.width = cosf(r) * ori.width + sinf(r) * ori.height;
 		ret.size.height = sinf(r) * ori.width + cosf(r) * ori.height;

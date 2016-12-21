@@ -68,7 +68,7 @@ void GoldLabel::resetLabel()
 	if (!m_label)
 	{
 		//m_label = Label::createWithBMFont("fonts/ui_mid.fnt", StringUtils::format("%d", m_num));
-		m_label = Label::createWithTTF(StringUtils::format("%d", m_num), "fonts/arial.ttf", 24);
+		m_label = Label::createWithTTF(StringUtils::format("%d", m_num), "fonts/arial.ttf", 20);
 		m_label->setTag(2);
 		this->addChild(m_label);
 		return;

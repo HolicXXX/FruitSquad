@@ -27,7 +27,9 @@ bool SkillButton::init(int index)
 	m_name = DataManager::getInstance()->getName(m_index);
 	m_isCD = false;
 	m_state = NORMAL;
+	m_effTime = 0;
 	m_effState = NONE;
+	m_effCount = 0;
 	m_skill = nullptr;
 	m_cd = nullptr;
 	m_eff = nullptr;
@@ -51,9 +53,9 @@ void SkillButton::resetButton()
 		lis->onTouchBegan = [this](Touch* t, Event* e)->bool{
 			auto pos = m_skill->convertTouchToNodeSpace(t);
 			auto rc = Rect{ Vec2::ZERO, m_skill->getContentSize() };
-			if (rc.containsPoint(pos) && (m_state == SkillButtonState::NORMAL) && (m_effState == SkillButtonEffect::NONE))
+			if (rc.containsPoint(pos) && (m_state == ButtonState::NORMAL) && (m_effState == ButtonEffect::NONE))
 			{
-				m_skill->setScale(0.99f);
+				m_skill->setScale(0.9f);
 				return true;
 			}
 			return false;
@@ -92,10 +94,11 @@ void SkillButton::resetTexture()
 			auto cd = ProgressTimer::create(Sprite::create(StringUtils::format("%scd.png", fileStr.c_str())));
 			cd->setType(ProgressTimer::Type::RADIAL);
 			m_cd->addChild(cd);
+			cd->setReverseProgress(true);
 			auto act = ProgressFromTo::create(m_cdTime, 100.0f, 0.0f);
 			cd->runAction(Sequence::create(act, 
 				CallFunc::create([this]()->void{
-				m_state = SkillButtonState::NORMAL;
+				m_state = ButtonState::NORMAL;
 				resetTexture();
 				m_cd->removeFromParent();
 				m_cd = nullptr;
@@ -114,7 +117,7 @@ void SkillButton::resetTexture()
 	}
 }
 
-void SkillButton::setEffect(SkillButtonEffect eff, float t)
+void SkillButton::setEffect(ButtonEffect eff, float t)
 {
 	std::string fileStr = "gamescene/skill/skill_eff_";
 	switch (eff)
@@ -125,6 +128,7 @@ void SkillButton::setEffect(SkillButtonEffect eff, float t)
 		{
 			m_eff->removeFromParent();
 			m_eff = nullptr;
+			this->unscheduleUpdate();
 		}
 	}
 		break;
@@ -138,6 +142,7 @@ void SkillButton::setEffect(SkillButtonEffect eff, float t)
 				m_eff = Sprite::create(StringUtils::format("%sfrozen.png", fileStr.c_str()));
 				m_eff->setTag(3);
 				this->addChild(m_eff);
+				this->scheduleUpdate();
 			}
 		}
 		else
@@ -145,6 +150,7 @@ void SkillButton::setEffect(SkillButtonEffect eff, float t)
 			m_eff = Sprite::create(StringUtils::format("%sfrozen.png", fileStr.c_str()));
 			m_eff->setTag(3);
 			this->addChild(m_eff);
+			this->scheduleUpdate();
 		}
 	}
 		break;
@@ -158,6 +164,7 @@ void SkillButton::setEffect(SkillButtonEffect eff, float t)
 				m_eff = Sprite::create(StringUtils::format("%ssleep.png", fileStr.c_str()));
 				m_eff->setTag(3);
 				this->addChild(m_eff);
+				this->scheduleUpdate();
 			}
 		}
 		else
@@ -165,6 +172,7 @@ void SkillButton::setEffect(SkillButtonEffect eff, float t)
 			m_eff = Sprite::create(StringUtils::format("%ssleep.png", fileStr.c_str()));
 			m_eff->setTag(3);
 			this->addChild(m_eff);
+			this->scheduleUpdate();
 		}
 	}
 		break;
@@ -178,6 +186,7 @@ void SkillButton::setEffect(SkillButtonEffect eff, float t)
 				m_eff = Sprite::create(StringUtils::format("%sforbidden.png", fileStr.c_str()));
 				m_eff->setTag(3);
 				this->addChild(m_eff);
+				this->scheduleUpdate();
 			}
 		}
 		else
@@ -185,26 +194,12 @@ void SkillButton::setEffect(SkillButtonEffect eff, float t)
 			m_eff = Sprite::create(StringUtils::format("%sforbidden.png", fileStr.c_str()));
 			m_eff->setTag(3);
 			this->addChild(m_eff);
+			this->scheduleUpdate();
 		}
 	}
 		break;
 	default:
 		break;
-	}
-	if (eff != NONE)
-	{
-		auto lis = EventListenerTouchOneByOne::create();
-		lis->setSwallowTouches(true);
-		lis->onTouchBegan = [this](Touch* t, Event* e)->bool{
-			auto pos = m_eff->convertTouchToNodeSpace(t);
-			auto rc = Rect{ Vec2::ZERO, m_eff->getContentSize() };
-			if (rc.containsPoint(pos))
-			{
-				return true;
-			}
-			return false;
-		};
-		_eventDispatcher->addEventListenerWithSceneGraphPriority(lis, m_eff);
 	}
 	m_effTime = t;
 	m_effState = eff;
@@ -216,11 +211,19 @@ void SkillButton::setCDTime()
 	{
 	case 0:
 	{
-		m_cdTime = 5.0f;
+		m_cdTime = 7.5f;
 	}
 	break;
 	case 1:
+	{
+		m_cdTime = 8.0f;
+	}
+	break;
 	case 2:
+	{
+		m_cdTime = 5.0f;
+	}
+	break;
 	case 3:
 	case 4:
 	case 5:
@@ -233,6 +236,16 @@ void SkillButton::setCDTime()
 	case 12:
 	default:
 		break;
+	}
+}
+
+void SkillButton::update(float dt)
+{
+	m_effCount += dt;
+	if (m_effCount >= m_effTime)
+	{
+		m_effCount = 0;
+		setEffect(ButtonEffect::NONE);
 	}
 }
 

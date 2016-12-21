@@ -5,6 +5,7 @@
 #include "LevelButton.h"
 #include "HeartPoints.h"
 #include "HeroHallLayer.h"
+#include "ShopLayer.h"
 
 class LevelSelectedScene : public cocos2d::Layer
 {
@@ -12,6 +13,7 @@ public:
 	static cocos2d::Scene* createScene();
 	static LevelSelectedScene* create();
 	virtual bool init();
+	virtual void onExit();
 
 	virtual void update(float dt);
 private:
@@ -33,6 +35,7 @@ private:
 	cocos2d::Node* m_keys;
 	//layers
 	HeroHall* m_heroHallLayer;
+	ShopLayer* m_shopLayer;
 
 	cocos2d::MenuItemImage* m_seasons;
 	cocos2d::MenuItemImage* m_heroHall;
@@ -40,6 +43,8 @@ private:
 
 	void initLevelButton();
 	void initUI();
+
+	void gameStart();
 };
 
 

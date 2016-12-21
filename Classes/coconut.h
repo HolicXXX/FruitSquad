@@ -1,12 +1,12 @@
-#ifndef _ORANGE_H_
-#define _ORANGE_H_
+#ifndef _COCONUT_H_
+#define _COCONUT_H_
 
 #include "HeroBase.h"
 
-class orange :public HeroBase
+class coconut : public HeroBase
 {
 public:
-	static orange* create();
+	static coconut* create();
 	virtual bool init();
 
 	virtual void initAttCircle();
@@ -22,14 +22,14 @@ public:
 	virtual void setBaseState(HeroState s);
 	virtual void setHeroLevel(Level l);
 	virtual void levelUp();
+
 private:
 	std::string getAttAniStr();
 	std::string getSkillAniStr();
 
 	void aniCallFunc(Armature *armature, MovementEventType movementType, const std::string& movementID);
-	
+
 	void checkTargetPos();
 };
-
 
 #endif

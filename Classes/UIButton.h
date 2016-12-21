@@ -16,7 +16,8 @@ enum ButtonType
 	MENU_SOUND_OFF,
 	MENU_MUSIC_ON,
 	MENU_MUSIC_OFF,
-	MENU_RETURN
+	MENU_RETURN,
+	NEXT
 };
 
 class UIButton : public cocos2d::Node

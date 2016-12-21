@@ -1,5 +1,7 @@
 #include "MapLevelStar.h"
 USING_NS_CC;
+#include "DataManager.h"
+#include "JsonTool.h"
 
 MapLevelStar* MapLevelStar::create()
 {
@@ -20,7 +22,10 @@ bool MapLevelStar::init()
 		return false;
 	}
 	m_starBG = nullptr;
-	setStarNum();
+	auto level = DataManager::getInstance()->getMapLevel();
+	auto num = JsonTool::getInstance()->getDoc()["springlevels"][level - 1]["star"].GetInt();
+	m_starNum = num;
+	setStarNum(m_starNum);
 	return true;
 }
 

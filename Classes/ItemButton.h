@@ -2,6 +2,7 @@
 #define _ITEM_BUTTON_H_
 
 #include "cocos2d.h"
+#include "Level.h"
 
 enum ButtonRole
 {
@@ -9,20 +10,13 @@ enum ButtonRole
 	USE
 };
 
-enum ItemButtonState
-{
-	NORMAL,
-	CD,
-	DISABEL,
-};
-
 enum ItemType
 {
-	BOOM,
-	ANGEL,
-	FROZEN,
-	BUFF,
-	DRAGON
+	I_BOOM,
+	I_ANGEL,
+	I_FROZEN,
+	I_BUFF,
+	I_DRAGON
 };
 
 class ItemButton : public cocos2d::Node
@@ -30,16 +24,20 @@ class ItemButton : public cocos2d::Node
 public:
 	static ItemButton* create(ButtonRole r, ItemType t);
 	virtual bool init(ButtonRole r, ItemType t);
+	virtual void update(float dt);
 
+	void bindSelectedCallBack(const std::function<void(ItemButton*)> & func);
 	void bindUseItemCallBack(const std::function<void()> & func){ m_useCallback = func; }
 
 	void setSelected(bool b);
 	bool isSelected(){ return m_isSelected; }
 	void resetTexture();
+	ItemType getItemType(){ return m_type; }
+	ButtonRole getRole(){ return m_role; }
 private:
 	ButtonRole m_role;
 	ItemType m_type;
-	ItemButtonState m_state;
+	ButtonState m_state;
 
 	void initName();
 	std::string m_name;
@@ -59,6 +57,8 @@ private:
 	void initNumberImage();
 	int m_number;
 	cocos2d::Sprite* m_numberImage;
+	void resetNubmerLabel();
+	cocos2d::Label* m_numberLabel;
 };
 
 #endif

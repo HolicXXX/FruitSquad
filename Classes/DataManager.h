@@ -15,6 +15,10 @@ public:
 	void submitTeamNumber(int t){ m_teamNum = t; }
 	std::vector<int>& getTeamList(){ return m_teamList; }
 	int getTeamNumber(){ return m_teamNum; }
+	void setTeamNumber(int t){ m_teamNum = t; }
+
+	int getMapLevel(){ return m_mapLevel; }
+	void setMapLevel(int l){ m_mapLevel = l; }
 
 	void registAddGoldCallBack(const std::function<void(int)> & func){ m_addGold = func; }
 	void registCostGoldCallBack(const std::function<void(int)> & func){ m_costGold = func; }
@@ -25,6 +29,8 @@ public:
 private:
 	DataManager();
 	~DataManager();
+
+	int m_mapLevel;
 
 	int m_gold;
 	std::function<void(int)> m_addGold;

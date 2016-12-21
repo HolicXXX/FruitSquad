@@ -1,5 +1,6 @@
 #include "LoadingScene.h"
 #include "AnimationManager.h"
+#include "DataManager.h"
 
 LoadingScene* LoadingScene::create()
 {
@@ -22,6 +23,7 @@ bool LoadingScene::init()
 	m_callback = nullptr;
 	auto size = Director::getInstance()->getVisibleSize();
 	AnimationManager::getInstance()->loadLoadingSceneAni();
+	m_loadNext = true;
 
 	initBackGround();
 	//hero
@@ -33,27 +35,78 @@ bool LoadingScene::init()
 	m_text = Label::createWithBMFont("fonts/loading_text.fnt", "Loading");
 	m_text->setPosition(size / 2);
 	this->addChild(m_text);
-	//random delay time
-	m_delay = CCRANDOM_0_1() * 3 + 1;
 
 	this->scheduleUpdate();
 	return true;
 }
 
+void LoadingScene::aniLoadtCallBack(float dt)
+{
+	++m_nextSceneAniCount;
+	if (m_nextSceneAniCount != m_nextSceneAniCountMax)
+		m_loadNext = true;
+}
+
+void LoadingScene::onEnterTransitionDidFinish()
+{
+	Node::onEnterTransitionDidFinish();
+	switch (m_nextSceneType)
+	{
+	case POINT_LELECT_SCENE:
+	{
+		AnimationManager::getInstance()->loadLevelSelectSceneAni(this, m_nextSceneAniCount);
+	}
+	break;
+	case GAME_SCENE:
+	{
+		AnimationManager::getInstance()->loadGameSceneAni(DataManager::getInstance()->getMapLevel(), this, m_nextSceneAniCount);
+	}
+	break;
+	default:
+		break;
+	}
+}
+
+void LoadingScene::onExit()
+{
+	Node::onExit();
+	AnimationManager::getInstance()->eraseLoadingSceneAni();
+}
+
+void LoadingScene::setNextSceneAni(NextSceneType type, int num)
+{
+	m_nextSceneType = type;
+	m_nextSceneAniCountMax = num;
+	m_nextSceneAniCount = 0;
+}
+
 void LoadingScene::update(float dt)
 {
-	static float delay = 0;
-	delay += dt;
-	if (delay >= m_delay)
+	if (m_nextSceneAniCount == m_nextSceneAniCountMax)
 	{
-		delay = 0;
-		if (m_callback)
-		{
-			auto scene = m_callback();
-			Director::getInstance()->replaceScene(TransitionFade::create(0.25f, scene));
-			return;
-		}
+		auto scene = m_callback();
+		Director::getInstance()->replaceScene(TransitionFade::create(0.25f, scene));
+		this->unscheduleUpdate();
 	}
+	/*else if (m_loadNext == true)
+	{
+		switch (m_nextSceneType)
+		{
+		case POINT_LELECT_SCENE:
+		{
+			AnimationManager::getInstance()->loadLevelSelectSceneAni(this, m_nextSceneAniCount);
+		}
+		break;
+		case GAME_SCENE:
+		{
+			AnimationManager::getInstance()->loadGameSceneAni(DataManager::getInstance()->getMapLevel(), this, m_nextSceneAniCount);
+		}
+		break;
+		default:
+			break;
+		}
+		m_loadNext = false;
+	}*/
 	static float time = 0;
 	time += dt;
 	if (time >= 0.5f)

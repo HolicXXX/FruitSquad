@@ -1,5 +1,7 @@
 #include "GameScene.h"
 #include "orange.h"
+#include "coconut.h"
+#include "apple.h"
 #include "scarab.h"
 #include "GameMenuLayer.h"
 #include "LoadingScene.h"
@@ -10,6 +12,9 @@
 #include "TargetManger.h"
 #include "MapManager.h"
 #include "BoxCullisionManager.h"
+#include "JsonTool.h"
+#include "SimpleAudioEngine.h"
+using namespace CocosDenshion;
 
 Scene* GameScene::createScene()
 {
@@ -36,8 +41,18 @@ bool GameScene::init()
 		return false;
 	}
 	auto size = Director::getInstance()->getVisibleSize();
-	AnimationManager::getInstance()->loadGameSceneAni(1);//level
 
+	if (JsonTool::getInstance()->getDoc()["sound"].GetBool())
+		if (JsonTool::getInstance()->getDoc()["music"].GetBool())
+			if (SimpleAudioEngine::getInstance()->isBackgroundMusicPlaying())
+				SimpleAudioEngine::getInstance()->stopBackgroundMusic();
+
+	auto level = DataManager::getInstance()->getMapLevel();
+	auto goldNum = JsonTool::getInstance()->getDoc()["springlevels"][level - 1]["gold"].GetInt();
+	DataManager::getInstance()->setGoldNum(goldNum);
+
+	m_deathCount = 0;
+	NotificationCenter::getInstance()->addObserver(this, SEL_CallFuncO(&GameScene::addDeathCount), "addDeathCount", nullptr);
 	//init map
 	initMap();
 	initEnemys();
@@ -56,15 +71,31 @@ bool GameScene::init()
 	return true;
 }
 
+void GameScene::addDeathCount(Ref*)
+{
+	++m_deathCount;
+}
+
+void GameScene::onExit()
+{
+	auto level = DataManager::getInstance()->getMapLevel();
+	JsonTool::getInstance()->saveJson();
+	AnimationManager::getInstance()->eraseGameSceneAni(level);
+	Node::onExit();
+	NotificationCenter::getInstance()->removeAllObservers(this);
+}
+
 void GameScene::initMap()
 {
 	auto size = Director::getInstance()->getVisibleSize();
-	//data
-	m_map = TMXTiledMap::create("gamescene/map/level_01.tmx");
+	auto level = DataManager::getInstance()->getMapLevel();
+	auto mapsrc = JsonTool::getInstance()->getDoc()["springlevels"][level - 1]["map"].GetString();
+	m_map = TMXTiledMap::create(mapsrc);
 	MapManager::getInstance()->registMap(m_map);
-	auto decoration = Sprite::create("gamescene/map/level_01.png");
+	auto decsrc = JsonTool::getInstance()->getDoc()["springlevels"][level - 1]["decoration"].GetString();
+	auto decoration = Sprite::create(decsrc);
 	decoration->setAnchorPoint(Vec2::ZERO);
-	m_map->addChild(decoration);
+	m_map->addChild(decoration, m_map->getLayer("road")->getZOrder());
 	this->addChild(m_map);
 	auto msize = MapManager::getInstance()->getMapSize();
 	//map drag
@@ -116,6 +147,26 @@ void GameScene::initMap()
 		m_portal->addChild(top);
 	}
 	m_map->addChild(m_portal, m_map->getLayer("road")->getZOrder());//ZOrder road
+}
+
+void GameScene::cameraMove(Vec2 step)
+{
+	auto size = Director::getInstance()->getVisibleSize();
+	auto firstPos = this->convertToNodeSpace(m_heros.at(0)->convertToWorldSpace(Vec2::ZERO));
+	if (Rect{ Vec2::ZERO, size }.containsPoint(firstPos))
+	{
+		auto mapsize = MapManager::getInstance()->getMapSize();
+		auto newPos = m_map->getPosition() - step;
+		if (newPos.x >= 0)
+			newPos.x = 0;
+		if (newPos.x <= size.width - mapsize.width)
+			newPos.x = size.width - mapsize.width;
+		if (newPos.y >= 0)
+			newPos.y = 0;
+		if (newPos.y <= size.height - mapsize.height)
+			newPos.y = size.height - mapsize.height;
+		m_map->setPosition(newPos);
+	}
 }
 
 void GameScene::initSelectMidLayer()
@@ -175,8 +226,9 @@ void GameScene::initHeroSelect()
 void GameScene::startCallBack()
 {
 	auto size = Director::getInstance()->getVisibleSize();
+	//reset map scale and position
 	m_previewScale = 1.0f;
-	m_map->setScale(1.0f);
+	m_map->setScale(m_previewScale);
 	auto obj = m_map->getObjectGroup("sign");
 	auto start = obj->getObject("start");
 	auto offset = Vec2(size / 2) - Vec2(start["x"].asFloat(), start["y"].asFloat());
@@ -189,12 +241,19 @@ void GameScene::startCallBack()
 	offset.y = 0;
 	}
 	m_map->setPosition(offset);
+	if (m_map->getPositionY() <= size.height - MapManager::getInstance()->getMapSize().height)
+	{
+		m_map->setPositionY(size.height - MapManager::getInstance()->getMapSize().height);
+	}
+	if (m_map->getPositionX() <= size.width - MapManager::getInstance()->getMapSize().width)
+	{
+		m_map->setPositionX(size.height - MapManager::getInstance()->getMapSize().height);
+	}
 
-	m_heroSelectLayer->removeFromParent();
 	m_midLayer->removeChildByTag(1);
-
 	//add ui
 	initUI();
+	initItems();
 	//render
 	auto rt = RenderTexture::create(size.width, size.height, Texture2D::PixelFormat::RGBA8888);
 	rt->setName("rt");
@@ -216,6 +275,89 @@ void GameScene::startCallBack()
 	m_startEff->addChild(eff);
 	m_startEff->setPosition(size / 2);
 	m_midLayer->addChild(m_startEff);
+
+	m_heroSelectLayer->removeFromParent();
+}
+
+void GameScene::initItems()
+{
+	auto item = m_heroSelectLayer->getSelectedItem();
+	if (item == nullptr)
+		return;
+	m_item = ItemButton::create(ButtonRole::USE, item->getItemType());
+	m_item->setPosition(100, 100);
+	m_item->bindUseItemCallBack([this]()->void{
+		useItem(m_item->getItemType());
+	});
+	m_midLayer->addChild(m_item);
+}
+
+void GameScene::useItem(ItemType type)
+{
+	auto size = Director::getInstance()->getVisibleSize();
+	switch (type)
+	{
+	case I_BOOM:
+		break;
+	case I_ANGEL:
+		break;
+	case I_FROZEN:
+	{
+		auto arm = Armature::create("ice");
+		if (JsonTool::getInstance()->getDoc()["sound"].GetBool())
+			SimpleAudioEngine::getInstance()->playEffect("sound/item_freeze.wav");
+		arm->getAnimation()->play("ice");
+		arm->getAnimation()->setMovementEventCallFunc(
+			[this,size](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
+			if (movementType == LOOP_COMPLETE)
+			{
+				auto bg = Sprite::create("gamescene/ani/eff/ice/debuff_freeze_bg.png");
+				bg->setName("ice_bg");
+				bg->setPosition(size / 2);
+				this->addChild(bg);
+				bg->runAction(Sequence::create(DelayTime::create(5.0f),
+					CallFunc::create([bg]()->void{
+					bg->removeFromParent();
+				}),
+					nullptr));
+				auto enemyVec = TargetManager::getInstance()->getEnemyTargets();
+				for (auto e : enemyVec)
+				{
+					auto freeze = DeBuff::create();
+					freeze->type = DeBuffType::FREEZE;
+					freeze->time = 5.0f;
+					freeze->demage = 0;
+					freeze->eff = Armature::create("freeze");
+					freeze->eff->getAnimation()->play("freeze");
+					freeze->eff->getAnimation()->setMovementEventCallFunc(
+						[freeze](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
+						if (movementType == LOOP_COMPLETE)
+						{
+							if (movementID == "freeze")
+								armature->getAnimation()->play("stay");
+							else if (movementID == "melt")
+								freeze->removeFromParent();
+						}
+					});
+					freeze->effName = "freeze";
+					freeze->addChild(freeze->eff);
+					freeze->setPosition(Vec2(0, -30));
+					e->getDeBuff(freeze);
+				}
+				armature->removeFromParent();
+			}
+		});
+		arm->setPosition(size / 2);
+		this->addChild(arm);
+	}
+		break;
+	case I_BUFF:
+		break;
+	case I_DRAGON:
+		break;
+	default:
+		break;
+	}
 }
 
 ValueMap GameScene::changeCheckPoint(ValueMap cp)
@@ -296,6 +438,8 @@ void GameScene::initHeros()
 		h->setPosition(m_portal->getPosition());
 		m_map->addChild(h, m_map->getLayer("road")->getZOrder());
 		m_heros.pushBack(h);
+		if (i == 0)
+			h->bindCameraMoveCallBack(CC_CALLBACK_1(GameScene::cameraMove, this));
 	}
 	TargetManager::getInstance()->registHero(m_heros);
 }
@@ -316,7 +460,25 @@ HeroBase* GameScene::getHero(int index)
 	}
 	break;
 	case 1:
+	{
+		h = coconut::create();
+		h->setVisi(false);
+		auto obj = m_map->getObjectGroup("sign");
+		auto start = obj->getObject("start");
+		h->setCheckPoint(start);
+		h->bindCheckCallBack(CC_CALLBACK_1(GameScene::changeCheckPoint, this));
+	}
+	break;
 	case 2:
+	{
+		h = apple::create();
+		h->setVisi(false);
+		auto obj = m_map->getObjectGroup("sign");
+		auto start = obj->getObject("start");
+		h->setCheckPoint(start);
+		h->bindCheckCallBack(CC_CALLBACK_1(GameScene::changeCheckPoint, this));
+	}
+	break;
 	case 3:
 	case 4:
 	case 5:
@@ -360,6 +522,7 @@ void GameScene::initEnemys()
 		auto pos = Vec2(obj["x"].asFloat(), obj["y"].asFloat());
 		auto e = scarab::create();
 		e->setPosition(pos);
+		e->setLevel(Level(int(CCRANDOM_0_1() * 3)));
 		m_map->addChild(e, m_map->getLayer("road")->getZOrder());
 		m_enemys.pushBack(e);
 	}
@@ -370,12 +533,15 @@ void GameScene::pauseAll()
 {
 	for (auto h : m_heros)
 	{
-		h->pauseAll();
+		if (h->isAlive())
+			h->pauseAll();
 	}
 	for (auto e : m_enemys)
 	{
-		e->pauseAll();
+		if (e->isAlive())
+			e->pauseAll();
 	}
+	//buttons
 	this->unscheduleUpdate();
 }
 
@@ -383,12 +549,15 @@ void GameScene::resumeAll()
 {
 	for (auto h : m_heros)
 	{
-		h->resumeAll();
+		if (h->isAlive())
+			h->resumeAll();
 	}
 	for (auto e : m_enemys)
 	{
-		e->resumeAll();
+		if (e->isAlive())
+			e->resumeAll();
 	}
+	//buttons
 	this->scheduleUpdate();
 }
 
@@ -407,7 +576,9 @@ void GameScene::initUI()
 	});
 	m_midLayer->addChild(m_pause);
 	//speed
-	m_speed = UIButton::create(ButtonType::SPEED_1);
+	auto fps = Director::getInstance()->getAnimationInterval();
+	auto speed = (fps > 1.0f / 30.0f) ? (ButtonType::SPEED_1) : (ButtonType::SPEED_2);
+	m_speed = UIButton::create(speed);
 	m_speed->setPosition(lefttop + Vec2(68, -68 * 2.5f));
 	m_speed->bindCallBack([]()->void{
 		Director::getInstance()->setAnimationInterval(1.0f / 40.0f);
@@ -431,14 +602,62 @@ void GameScene::initUI()
 	m_gold->setPosition(righttop - Vec2(100, 50));
 	m_gold->setOpacity(0);
 	m_midLayer->addChild(m_gold);
+	NotificationCenter::getInstance()->addObserver(this, SEL_CallFuncO(&GameScene::getGold), "addGoldAni", nullptr);
 	//hp
 	m_hp = HPBottle::create();
 	m_hp->setPosition(righttop - Vec2(100, 130));
 	m_hp->bindCallBack([this]()->void{
-		CCLOG("use hpbottle");
+		auto hvec = TargetManager::getInstance()->getHeroTargets();
+		for (auto h : hvec)
+		{
+			if (h->isAlive())
+			{
+				auto buff = Buff::create();
+				buff->eff = Armature::create("heal");
+				buff->eff->getAnimation()->play("heal");
+				buff->addChild(buff->eff);
+				buff->type = BuffType::HEAL;
+				buff->effName = "heal";
+				buff->time = 4.0f;
+				buff->buffNum = 50.0f;
+				h->getBuff(buff);
+			}
+		}
 	});
 	m_hp->setOpacity(0);
 	m_midLayer->addChild(m_hp);
+}
+
+void GameScene::getGold(Ref* ref)
+{
+	auto e = static_cast<EnemyBase*>(ref);
+	if (!e->isAlive())
+	{
+		auto pos = m_midLayer->convertToNodeSpace(e->convertToWorldSpace(Vec2::ZERO));
+		auto gold = Armature::create("gold");
+		gold->setPosition(pos);
+		gold->getAnimation()->play("gold");
+		gold->setScale(0.3f);
+		gold->runAction(
+			Sequence::create(MoveTo::create(0.75f, m_gold->getPosition()),
+			CallFunc::create([this, e, gold]()->void{
+			auto get = Armature::create("get");
+			get->getAnimation()->play("get");
+			get->setPosition(m_gold->getPosition());
+			m_midLayer->addChild(get);
+			get->getAnimation()->setMovementEventCallFunc(
+				[this, gold](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
+				if (movementType == LOOP_COMPLETE)
+				{
+					armature->removeFromParent();
+				}
+			});
+			m_gold->getCoin(e->getGoldNum());
+			gold->removeFromParent();
+		}),
+			nullptr));
+		m_midLayer->addChild(gold);
+	}
 }
 
 void GameScene::addMenuLayer()
@@ -449,6 +668,7 @@ void GameScene::addMenuLayer()
 		auto scene = Scene::create();
 		auto load = LoadingScene::create();
 		load->bindNextSceneCallBack(GameScene::createScene);
+		load->setNextSceneAni(NextSceneType::GAME_SCENE, 20);
 		scene->addChild(load);
 		Director::getInstance()->replaceScene(TransitionMoveInL::create(0.5f, scene));
 	});
@@ -456,6 +676,7 @@ void GameScene::addMenuLayer()
 		auto scene = Scene::create();
 		auto load = LoadingScene::create();
 		load->bindNextSceneCallBack(LevelSelectedScene::createScene);
+		load->setNextSceneAni(NextSceneType::POINT_LELECT_SCENE, 2);
 		scene->addChild(load);
 		Director::getInstance()->replaceScene(TransitionMoveInL::create(0.5f, scene));
 	});
@@ -484,14 +705,63 @@ void GameScene::update(float dt)
 			}
 		}
 	}
-	//each
+	//move check
 	for (auto h : m_heros)
 	{
 		h->pointCheck();
 	}
+	//zorder
+	for (int i = 0; i < m_heros.size(); ++i)
+	{
+		auto h = m_heros.at(i);
+		h->setZOrder(MapManager::getInstance()->getMapSize().height - h->getPositionY());
+	}
+	//skill hit check
 	auto hbvec = BoxCullisionManager::getInstance()->m_heroBox;
 	for (auto hb : hbvec)
 	{
 		BoxCullisionManager::getInstance()->hitEnemy(hb);
 	}
+
+	bool isend = true;
+	for (auto h : m_heros)
+	{
+		isend = isend && (h->getBaseState() == HeroState::STOP);
+	}
+	if (isend)
+	{
+		this->pauseAll();
+		this->runAction(Sequence::create(DelayTime::create(1.0f) ,CallFunc::create([this](){
+			callSettleMent();
+		}),nullptr));
+	}
+}
+
+void GameScene::callSettleMent()
+{
+	auto level = DataManager::getInstance()->getMapLevel();
+	JsonTool::getInstance()->getDoc()["springlevels"][level - 1]["death"].SetInt(m_deathCount);
+	m_settleMent = SettlementLayer::create(0);
+	m_settleMent->bindRetryCallBack([]()->void{
+		auto scene = Scene::create();
+		auto load = LoadingScene::create();
+		load->bindNextSceneCallBack(GameScene::createScene);
+		load->setNextSceneAni(NextSceneType::GAME_SCENE, 20);
+		scene->addChild(load);
+		Director::getInstance()->replaceScene(TransitionMoveInL::create(0.5f, scene));
+	});
+	m_settleMent->bindNextCallBack([]()->void{
+		auto scene = Scene::create();
+		auto load = LoadingScene::create();
+		load->bindNextSceneCallBack(LevelSelectedScene::createScene);
+		load->setNextSceneAni(NextSceneType::POINT_LELECT_SCENE, 2);
+		scene->addChild(load);
+		Director::getInstance()->replaceScene(TransitionMoveInL::create(0.5f, scene));
+	});
+	this->addChild(m_settleMent);
+	if (JsonTool::getInstance()->getDoc()["sound"].GetBool())
+		SimpleAudioEngine::getInstance()->playEffect("sound/settlement.wav");
+	JsonTool::getInstance()->getDoc()["springlevels"][level - 1]["state"].SetInt(2);
+	if (JsonTool::getInstance()->getDoc()["springlevels"][level]["state"].GetInt() == 0)
+		JsonTool::getInstance()->getDoc()["springlevels"][level]["state"].SetInt(1);
 }

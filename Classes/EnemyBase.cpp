@@ -21,19 +21,31 @@ bool EnemyBase::init()
 
 void EnemyBase::getHit(Armature* eff, float demage)
 {
+	if (this->isAlive() == false)
+		return;
 	this->addChild(eff);
 	m_hitVec.pushBack(eff);
-	this->runAction(Sequence::create(TintTo::create(0.01f, Color3B(255, 0, 0)), TintTo::create(0.01f, Color3B(255, 255, 255)), nullptr));
+	this->hpDown(demage);
 	eff->getAnimation()->setMovementEventCallFunc(
-		[this, demage](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
+		[this](Armature *armature, MovementEventType movementType, const std::string& movementID)->void{
 		if (movementType == LOOP_COMPLETE)
 		{
-			if (this->isAlive() == true)
-				this->hpDown(demage);
 			m_hitVec.eraseObject(armature);
 			armature->removeFromParent();
 		}
 	});
+}
+
+void EnemyBase::eraseDebuff(DeBuff* d)
+{
+	if (this->isAlive())
+		m_debuffVec.eraseObject(d);
+}
+
+void EnemyBase::eraseBuff(Buff* b)
+{
+	if (this->isAlive())
+		m_buffVec.eraseObject(b);
 }
 
 void EnemyBase::getDeBuff(DeBuff* debuff)
@@ -41,7 +53,7 @@ void EnemyBase::getDeBuff(DeBuff* debuff)
 	bool isfind = false;
 	for (auto d : m_debuffVec)
 	{
-		if (debuff->effName.compare(d->effName) == 0 && d->eff != nullptr)
+		if (debuff->effName.compare(d->effName) == 0 && debuff->type == d->type)
 		{
 			isfind = true;
 			break;
@@ -51,46 +63,105 @@ void EnemyBase::getDeBuff(DeBuff* debuff)
 	{
 		m_debuffVec.pushBack(debuff);
 		debuff->bindDemageCallBack(CC_CALLBACK_1(EnemyBase::hpDown, this));
+		debuff->bindEraseDebuffCallBack(CC_CALLBACK_1(EnemyBase::eraseDebuff, this));
 		debuff->scheduleUpdate();
 		this->addChild(debuff);
 	}
 }
 
-void EnemyBase::getBuff(Armature* eff, BuffType type, float time, float percent)
+void EnemyBase::getBuff(Buff* buff)
 {
-
+	bool isfind = false;
+	for (auto b : m_buffVec)
+	{
+		if (buff->effName.compare(b->effName) == 0 && buff->type == b->type)
+		{
+			isfind = true;
+			break;
+		}
+	}
+	if (!isfind)
+	{
+		m_buffVec.pushBack(buff);
+		buff->bindHealCallBack(CC_CALLBACK_1(EnemyBase::hpDown, this));
+		buff->bindEraseBuffCallBack(CC_CALLBACK_1(EnemyBase::eraseBuff, this));
+		buff->scheduleUpdate();
+		this->addChild(buff);
+	}
 }
 
 void EnemyBase::pauseAll()
 {
 	setBaseState(ENEMY_STOP);
 	this->unscheduleUpdate();
+	for (auto d : m_debuffVec)
+	{
+		d->unscheduleUpdate();
+	}
+	for (auto b : m_buffVec)
+	{
+		b->unscheduleUpdate();
+	}
 }
 
 void EnemyBase::resumeAll()
 {
 	setBaseState(m_preState);
 	this->scheduleUpdate();
+	for (auto d : m_debuffVec)
+	{
+		d->scheduleUpdate();
+	}
+	for (auto b : m_buffVec)
+	{
+		b->scheduleUpdate();
+	}
 }
 
 void EnemyBase::hpDown(float d)
 {
+	if (isAlive() == false)
+		return;
 	if (m_hpBar->getOpacity() == 0)
 		m_hpBar->setOpacity(255);
-	m_hp -= d;
-	if (m_hp < 0)
+	if (d > 0)
+	{
+		float demagePercent = 1;
+		for (auto b : m_buffVec)
+		{
+			if (b->type == BuffType::DEMAGE_AVOID)
+				demagePercent *= ((100 - b->buffNum) / 100);
+		}
+		m_hp -= d * demagePercent;
+	}
+	else
+	{
+		m_hp -= d / 100.0f * m_hpMax;
+	}
+
+	if (m_hp <= 0)
 	{
 		m_hp = 0;
 		m_ani->setOpacity(0);
 		m_tomb->setVisible(true);
-		this->unscheduleUpdate();
 		for (auto h : m_hitVec)
 		{
-			h->removeFromParent();
+			h->setOpacity(0);
 		}
 		m_hitVec.clear();
+		for (auto d : m_debuffVec)
+		{
+			d->setOpacity(0);
+		}
+		m_debuffVec.clear();
+		for (auto b : m_buffVec)
+		{
+			b->setOpacity(0);
+		}
+		m_buffVec.clear();
 		TargetManager::getInstance()->eraseEnemy(this);
-		//gold add ani
+		NotificationCenter::getInstance()->postNotification("addGoldAni", this);
+		this->unscheduleUpdate();
 	}
 	else if (m_hp > m_hpMax)
 	{

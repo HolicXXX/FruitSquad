@@ -21,9 +21,10 @@ bool scarab::init()
 	}
 	//data
 	setName("scarab");
-	m_hpMax = m_hp = 2000;
+	m_hpMax = m_hp = 200;
 	m_attDemage = 10;
 	m_hitSpeed = 20;
+	m_goldNum = (10 + CCRANDOM_0_1() * 5) * (int(m_level) + 1);
 	resetHPBar();
 
 	m_attackCircleR = 200;
@@ -39,7 +40,6 @@ void scarab::initAttCircle()
 {
 	m_attCircle = Sprite::create("gamescene/hero/hero_skill_scope.png");
 	m_attCircle->setScale(m_attackCircleR / (m_attCircle->getContentSize().width / 2));
-	//m_attCircle->setColor(Color3B::YELLOW);
 	m_attCircle->setVisible(false);
 	this->addChild(m_attCircle);
 }
@@ -48,9 +48,7 @@ void scarab::initAni()
 {
 	if (m_ani == nullptr)
 	{
-		//callback
 		m_ani = Armature::create("scarab");
-		//m_ani->getAnimation()->setMovementEventCallFunc(CC_CALLBACK_3(orange::aniCallFunc, this));
 		m_ani->getAnimation()->play("low");
 		this->addChild(m_ani);
 	}
@@ -103,7 +101,7 @@ void scarab::checkTargetPos()
 		auto dir = this->convertToNodeSpace(m_target->convertToWorldSpace(Vec2(0, -20)));
 		if (dir.length() > m_attackCircleR || m_target->isAlive() == false)
 		{
-			//m_target = nullptr;
+			m_target = nullptr;
 			this->setBaseState(ENEMY_STOP);
 			auto tar = TargetManager::getInstance()->getHeroTarget(this);
 			if (tar != nullptr)
@@ -114,7 +112,6 @@ void scarab::checkTargetPos()
 		{
 			setBaseState(EnemyState::ENEMY_ATTACK);
 		}
-		//auto dir = m_target->getPosition() - this->getPosition();
 		auto r = -CC_RADIANS_TO_DEGREES(dir.getAngle());
 		m_ani->setRotation(-90 + r);
 	}
@@ -131,16 +128,11 @@ void scarab::checkTargetPos()
 
 void scarab::update(float dt)
 {
-	for (int i = m_debuffVec.size() - 1; i >= 0; --i)
+	for (auto d : m_debuffVec)
 	{
-		auto d = m_debuffVec.at(i);
-		if (d->eff == nullptr)
-		{
-			d->removeFromParent();
-			m_debuffVec.eraseObject(d);
-		}
+		if (d->type == DeBuffType::FREEZE)
+			return;
 	}
-	//buff
 	checkTargetPos();
 	if (m_target && m_baseState == EnemyState::ENEMY_ATTACK)
 	{
@@ -157,8 +149,8 @@ void scarab::update(float dt)
 				auto arm = Armature::create("scarabBullet");
 				arm->getAnimation()->play("scarabBullet");
 				arm->setPosition(bul->getPosition());
+				static_cast<HeroBase*>(bul->getParent())->getHit(arm, m_attDemage);
 				bul->removeFromParent();
-				m_target->getHit(arm, m_attDemage);
 			})
 				, nullptr));
 			count = 0;
@@ -177,7 +169,8 @@ void scarab::setBaseState(EnemyState s)
 void scarab::setLevel(Level l)
 {
 	EnemyBase::setLevel(l);
-	//
 	auto name = getAnimationName();
 	playAnimation(name);
+	//m_attackCircleR = 200 + 50 * int(l);
+	m_attDemage = 10 + 5 * int(l);
 }

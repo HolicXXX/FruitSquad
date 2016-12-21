@@ -1,4 +1,5 @@
 #include "SeasonLayer.h"
+#include "JsonTool.h"
 USING_NS_CC;
 
 SeasonLayer* SeasonLayer::create()
@@ -88,10 +89,11 @@ bool SeasonLayer::init()
 			Rect rc = { Vec2::ZERO, pic->getContentSize() };
 			if (rc.containsPoint(pos))
 			{
-				//compare with data and callback
-				CCLOG("callback");
+				if (focus->getChildByTag(3) == nullptr)
+					this->removeFromParent();
 			}
-			this->removeFromParent();
+			else
+				this->removeFromParent();
 		}
 		else
 		{
@@ -194,7 +196,8 @@ void SeasonLayer::initSeasons()
 		m_seasons.clear();
 	}
 	auto size = Director::getInstance()->getVisibleSize();
-	//base on data
+
+	String springstate = JsonTool::getInstance()->getDoc()["spring"].GetString();
 	auto spring = Node::create();
 	{
 		auto spr = Sprite::create("levelselectscene/season/spring_normal.png");
@@ -204,11 +207,48 @@ void SeasonLayer::initSeasons()
 		eff->setTag(2);
 		eff->setVisible(false);
 		spring->addChild(eff);
+		if (springstate.compare("lock") == 0)
+		{
+			auto lock = Sprite::create("levelselectscene/season/season_lock_01.png");
+			lock->setTag(3);
+			auto locklis = EventListenerTouchOneByOne::create();
+			locklis->setSwallowTouches(true);
+			locklis->onTouchBegan = [lock](Touch* t, Event* e)->bool{
+				auto pos = lock->convertTouchToNodeSpace(t);
+				auto rc = Rect{ Vec2::ZERO, lock->getContentSize() };
+				if (rc.containsPoint(pos))
+				{
+					lock->setTexture("levelselectscene/season/season_lock_02.png");
+					return true;
+				}
+				return false;
+			};
+			locklis->onTouchEnded = [lock](Touch* t, Event* E)->void{
+				auto pos = lock->convertTouchToNodeSpace(t);
+				auto rc = Rect{ Vec2::ZERO, lock->getContentSize() };
+				if (rc.containsPoint(pos))
+				{
+					lock->setTexture("levelselectscene/season/season_lock_03.png");
+					lock->runAction(Sequence::create(
+						MoveBy::create(0.1f,Vec2(10,10)), 
+						MoveBy::create(0.1f, Vec2(-20, -20)),
+						MoveBy::create(0.1f, Vec2(10, 10)),
+						CallFunc::create([lock]()->void{
+						lock->setTexture("levelselectscene/season/season_lock_01.png");
+					}),
+						nullptr));
+				}
+				lock->setTexture("levelselectscene/season/season_lock_01.png");
+			};
+			_eventDispatcher->addEventListenerWithSceneGraphPriority(locklis, lock);
+			spring->addChild(lock);
+		}
 	}
 	spring->setPosition(size / 2);
 	m_seasons.pushBack(spring);
 	this->addChild(spring);
 
+	String summerstate = JsonTool::getInstance()->getDoc()["summer"].GetString();
 	auto summer = Node::create();
 	{
 		auto sum = Sprite::create("levelselectscene/season/summer_shadow.png");
@@ -218,6 +258,42 @@ void SeasonLayer::initSeasons()
 		eff->setTag(2);
 		eff->setVisible(false);
 		summer->addChild(eff);
+		if (summerstate.compare("lock") == 0)
+		{
+			auto lock = Sprite::create("levelselectscene/season/season_lock_01.png");
+			lock->setTag(3);
+			auto locklis = EventListenerTouchOneByOne::create();
+			locklis->setSwallowTouches(true);
+			locklis->onTouchBegan = [lock](Touch* t, Event* e)->bool{
+				auto pos = lock->convertTouchToNodeSpace(t);
+				auto rc = Rect{ Vec2::ZERO, lock->getContentSize() };
+				if (rc.containsPoint(pos))
+				{
+					lock->setTexture("levelselectscene/season/season_lock_02.png");
+					return true;
+				}
+				return false;
+			};
+			locklis->onTouchEnded = [lock](Touch* t, Event* E)->void{
+				auto pos = lock->convertTouchToNodeSpace(t);
+				auto rc = Rect{ Vec2::ZERO, lock->getContentSize() };
+				if (rc.containsPoint(pos))
+				{
+					lock->setTexture("levelselectscene/season/season_lock_03.png");
+					lock->runAction(Sequence::create(
+						MoveBy::create(0.1f, Vec2(10, 10)),
+						MoveBy::create(0.1f, Vec2(-20, -20)),
+						MoveBy::create(0.1f, Vec2(10, 10)),
+						CallFunc::create([lock]()->void{
+						lock->setTexture("levelselectscene/season/season_lock_01.png");
+					}),
+						nullptr));
+				}
+				lock->setTexture("levelselectscene/season/season_lock_01.png");
+			};
+			_eventDispatcher->addEventListenerWithSceneGraphPriority(locklis, lock);
+			summer->addChild(lock);
+		}
 	}
 	summer->setPosition(spring->getPosition() + Vec2(size.width / 2, 0));
 	m_seasons.pushBack(summer);
@@ -234,6 +310,36 @@ void SeasonLayer::initSeasons()
 		tobe->addChild(eff);
 		auto lock = Sprite::create("levelselectscene/season/season_lock_01.png");
 		lock->setTag(3);
+		auto locklis = EventListenerTouchOneByOne::create();
+		locklis->setSwallowTouches(true);
+		locklis->onTouchBegan = [lock](Touch* t, Event* e)->bool{
+			auto pos = lock->convertTouchToNodeSpace(t);
+			auto rc = Rect{ Vec2::ZERO, lock->getContentSize() };
+			if (rc.containsPoint(pos))
+			{
+				lock->setTexture("levelselectscene/season/season_lock_02.png");
+				return true;
+			}
+			return false;
+		};
+		locklis->onTouchEnded = [lock](Touch* t, Event* E)->void{
+			auto pos = lock->convertTouchToNodeSpace(t);
+			auto rc = Rect{ Vec2::ZERO, lock->getContentSize() };
+			if (rc.containsPoint(pos))
+			{
+				lock->setTexture("levelselectscene/season/season_lock_03.png");
+				lock->runAction(Sequence::create(
+					MoveBy::create(0.1f, Vec2(10, 10)),
+					MoveBy::create(0.1f, Vec2(-20, -20)),
+					MoveBy::create(0.1f, Vec2(10, 10)),
+					CallFunc::create([lock]()->void{
+					lock->setTexture("levelselectscene/season/season_lock_01.png");
+				}),
+					nullptr));
+			}
+			lock->setTexture("levelselectscene/season/season_lock_01.png");
+		};
+		_eventDispatcher->addEventListenerWithSceneGraphPriority(locklis, lock);
 		tobe->addChild(lock);
 	}
 	tobe->setPosition(summer->getPosition() + Vec2(size.width / 2, 0));

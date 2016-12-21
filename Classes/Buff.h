@@ -25,18 +25,39 @@ public:
 	virtual bool init();
 	virtual void update(float dt);
 	void bindDemageCallBack(const std::function<void(float)>& func);
+	void bindEraseDebuffCallBack(const std::function<void(DeBuff*)>& func);
 	Armature* eff;
 
 	DeBuffType type;
 	std::string effName;
 	float time;
 	float demage;
-	int demageTimes;
-
-	int m_count;
 private:
 	std::function<void(float)> m_callback;
+	std::function<void(DeBuff*)> m_erase;
+	float m_delay;
+};
 
+class Buff : public Node
+{
+public:
+	CREATE_FUNC(Buff);
+	virtual bool init();
+	virtual void update(float dt);
+
+	void bindHealCallBack(const std::function<void(float)>& func);
+	void bindEraseBuffCallBack(const std::function<void(Buff*)>& func);
+
+	Armature* eff;
+
+	BuffType type;
+	std::string effName;
+	float time;
+	float buffNum;
+
+private:
+	std::function<void(float)> m_callback;
+	std::function<void(Buff*)> m_erase;
 	float m_delay;
 };
 

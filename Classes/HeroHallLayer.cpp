@@ -1,4 +1,5 @@
 #include "HeroHallLayer.h"
+#include "JsonTool.h"
 USING_NS_CC;
 
 HeroHall* HeroHall::create()
@@ -21,7 +22,7 @@ bool HeroHall::init()
 	}
 	auto size = Director::getInstance()->getVisibleSize();
 	m_focus = nullptr;
-	m_propertyBox = nullptr;
+	m_property = nullptr;
 	this->setPosition(Vec2(0, size.height));
 
 	initBackGround();
@@ -71,9 +72,8 @@ bool HeroHall::init()
 			if (rc.containsPoint(pos))
 			{
 				m_returnButton->setTexture("levelselectscene/herohall/button_return_normal.png");
-				//callback
 				auto seq = Sequence::create(
-					MoveBy::create(0.5f, Vec2(0, size.height)),
+					MoveBy::create(0.3f, Vec2(0, size.height)),
 					nullptr);
 				this->runAction(seq);
 			}
@@ -83,7 +83,6 @@ bool HeroHall::init()
 	}
 	//init hero icon
 	initHeroIcon();
-	setPropertyBox();
 	//model
 	{
 		m_heroModel = HeroModel::create(m_focus->getTag());
@@ -92,6 +91,7 @@ bool HeroHall::init()
 	}
 
 	initUI();
+	initPropertyBox();
 
 	//set swallow
 	auto lis = EventListenerTouchOneByOne::create();
@@ -110,28 +110,17 @@ bool HeroHall::init()
 	return true;
 }
 
-void HeroHall::setPropertyBox()
+void HeroHall::onExit()
 {
-	auto size = Director::getInstance()->getVisibleSize();
-	if (!m_propertyBox)
-	{
-		m_propertyBox = Node::create();
-		{
-			auto bg = Sprite::create("levelselectscene/herohall/property_box.png");
-			bg->setTag(1);
-			m_propertyBox->addChild(bg);
-			//base on data,add property bar and label
-		}
-		m_propertyBox->setPosition(m_clipping->getPositionX() + 122 * 2 + 20, size.height / 5);
-		this->addChild(m_propertyBox);
-	}
-	//base on data,reset property bar and label
+	NotificationCenter::getInstance()->removeAllObservers(this);
+	Node::onExit();
 }
 
 void HeroHall::initHeroIcon()
 {
 	auto size = Director::getInstance()->getVisibleSize();
 	//data
+	const int unlockhero = 3;
 	std::vector<std::string> m_firstPageStr(8);
 	m_firstPageStr[0] = "orange";
 	m_firstPageStr[1] = "coconut";
@@ -169,7 +158,7 @@ void HeroHall::initHeroIcon()
 		auto node = Node::create();
 		//data
 		auto state = std::string();
-		if (i == 0)
+		if (i < unlockhero)
 		{
 			state = "normal";
 		}
@@ -257,7 +246,7 @@ void HeroHall::initHeroIcon()
 		m_firstPageOrigin->setPositionX(newPos1);
 		m_secondPageOrigin->setPositionX(newPos2);
 	};
-	lis->onTouchEnded = [this](Touch*t, Event* e)->void{
+	lis->onTouchEnded = [this, unlockhero](Touch*t, Event* e)->void{
 		auto pos = m_clipping->convertTouchToNodeSpace(t);
 		auto rc = Rect{ Vec2::ZERO, Size(122 * 4 + 40, 122 * 2 + 20) };
 		auto dis = t->getLocation() - t->getStartLocation();
@@ -288,7 +277,7 @@ void HeroHall::initHeroIcon()
 				auto newPos = p1->convertTouchToNodeSpace(t);
 				auto iconSize = p1->getChildByTag(1)->getContentSize();
 				auto iconRect = Rect{ Vec2(-iconSize.width / 2, -iconSize.height / 2), iconSize };
-				if (iconRect.containsPoint(newPos))
+				if (iconRect.containsPoint(newPos) && p1->getTag() < unlockhero)
 				{
 					if (this->m_focus != nullptr)
 					{
@@ -299,6 +288,7 @@ void HeroHall::initHeroIcon()
 					//callback
 					CCLOG("hero icon callback");
 					m_heroModel->resetHeroIndex(p1->getTag());
+					m_property->resetBox(p1->getTag());
 					break;
 				}
 			}
@@ -310,7 +300,7 @@ void HeroHall::initHeroIcon()
 				auto newPos = p2->convertTouchToNodeSpace(t);
 				auto iconSize = p2->getChildByTag(1)->getContentSize();
 				auto iconRect = Rect{ Vec2(-iconSize.width / 2, -iconSize.height / 2), iconSize };
-				if (iconRect.containsPoint(newPos))
+				if (iconRect.containsPoint(newPos) && p2->getTag() < unlockhero)
 				{
 					if (p2->getTag() > 12)
 					{
@@ -325,6 +315,7 @@ void HeroHall::initHeroIcon()
 					//callback
 					CCLOG("hero icon callback");
 					m_heroModel->resetHeroIndex(p2->getTag());
+					m_property->resetBox(p2->getTag());
 					break;
 				}
 			}
@@ -410,6 +401,10 @@ void HeroHall::initUI()
 		bg->setTag(1);
 		m_gems->addChild(bg);
 		//add label
+		auto gemsNum = JsonTool::getInstance()->getDoc()["gems"].GetInt();
+		auto label = Label::createWithBMFont("fonts/ui_mid.fnt", StringUtils::format("%d", gemsNum));
+		label->setTag(2);
+		m_gems->addChild(label);
 		auto add = Sprite::create("levelselectscene/herohall/button_add_normal.png");
 		add->setTag(3);
 		add->setPosition(bg->getContentSize().width / 2 - 25, 0);
@@ -448,6 +443,10 @@ void HeroHall::initUI()
 		bg->setTag(1);
 		m_fruits->addChild(bg);
 		//add label
+		auto fruitNum = JsonTool::getInstance()->getDoc()["fruit"].GetInt();
+		auto label = Label::createWithBMFont("fonts/ui_mid.fnt", StringUtils::format("%d", fruitNum));
+		label->setTag(2);
+		m_fruits->addChild(label);
 		auto add = Sprite::create("levelselectscene/herohall/button_add_normal.png");
 		add->setTag(3);
 		add->setPosition(bg->getContentSize().width / 2 - 25, 0);
@@ -479,6 +478,30 @@ void HeroHall::initUI()
 	m_fruits->setPosition(size.width - m_gems->getChildByTag(1)->getContentSize().width / 2 - 50 - m_fruits->getChildByTag(1)->getContentSize().width - 50,
 		size.height - m_fruits->getChildByTag(1)->getContentSize().height);
 	this->addChild(m_fruits);
+	NotificationCenter::getInstance()->addObserver(this, SEL_CallFuncO(&HeroHall::fruitDown), "costFruit", nullptr);
+}
+
+void HeroHall::fruitDown(Ref* sender)
+{
+	auto fruitNum = JsonTool::getInstance()->getDoc()["fruit"].GetInt();
+	auto label = static_cast<Label*>(m_fruits->getChildByTag(2));
+	label->setString(StringUtils::format("%d", fruitNum));
+}
+
+void HeroHall::initPropertyBox()
+{
+	auto size = Director::getInstance()->getVisibleSize();
+	m_property = PropertyBox::create();
+	m_property->resetBox(m_focus->getTag());
+	m_property->setPosition(m_clipping->getPositionX() + 122 * 2 + 20, size.height / 5);
+	this->addChild(m_property);
+	NotificationCenter::getInstance()->addObserver(this, SEL_CallFuncO(&HeroHall::resetCallBack), "resetBox", nullptr);
+
+}
+
+void HeroHall::resetCallBack(Ref*)
+{
+	m_property->resetBox(m_focus->getTag());
 }
 
 void HeroHall::initBackGround()

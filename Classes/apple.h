@@ -1,12 +1,12 @@
-#ifndef _ORANGE_H_
-#define _ORANGE_H_
+#ifndef _APPLE_H_
+#define _APPLE_H_
 
 #include "HeroBase.h"
 
-class orange :public HeroBase
+class apple : public HeroBase
 {
 public:
-	static orange* create();
+	static apple* create();
 	virtual bool init();
 
 	virtual void initAttCircle();
@@ -27,7 +27,7 @@ private:
 	std::string getSkillAniStr();
 
 	void aniCallFunc(Armature *armature, MovementEventType movementType, const std::string& movementID);
-	
+
 	void checkTargetPos();
 };
 

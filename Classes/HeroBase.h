@@ -23,9 +23,11 @@ public:
 	virtual void playAnimation(const std::string & name) = 0;
 	virtual std::string getAnimationName() = 0;
 
+	virtual void initTouchListener() = 0;
+
 	virtual void getHit(Armature* eff, float demage);
 	virtual void getDeBuff(DeBuff* debuff);
-	virtual void getBuff(Armature* eff, BuffType type, float time, float percent = 0);
+	virtual void getBuff(Buff* buff);
 	virtual void pauseAll();
 	virtual void resumeAll();
 	virtual void hpDown(float d);
@@ -47,6 +49,7 @@ public:
 	void changeCheckPoint(){ m_checkPoint = m_changeCheckPoint(m_checkPoint); }
 	void pointCheck();
 	Vec2 getNextDir();
+	void bindCameraMoveCallBack(const std::function<void(Vec2)>& func){ m_cameraMove = func; }
 
 	void bindTarget(TargetBase* t){ m_target = t; }
 
@@ -63,11 +66,15 @@ protected:
 	Vec2 m_dir;
 	bool m_isRight;
 	bool m_isVisi;
-
 	std::string m_currentAni;
 
 	ValueMap m_checkPoint;
 	std::function<ValueMap(ValueMap)> m_changeCheckPoint;
+
+	void eraseDebuff(DeBuff*);
+	void eraseBuff(Buff*);
+
+	std::function<void(Vec2)> m_cameraMove;
 };
 
 #endif

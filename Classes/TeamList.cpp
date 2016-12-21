@@ -1,5 +1,7 @@
 #include "TeamList.h"
+#include "DataManager.h"
 USING_NS_CC;
+#include "JsonTool.h"
 
 TeamList* TeamList::create()
 {
@@ -20,8 +22,8 @@ bool TeamList::init()
 		return false;
 	}
 	m_count = 0;
-	//data
-	m_maxNum = 1;
+	auto level = DataManager::getInstance()->getMapLevel();
+	m_maxNum = JsonTool::getInstance()->getDoc()["springlevels"][level - 1]["heroNumber"].GetInt();
 	m_mustChoosePos = m_mustChooseIndex = -2;
 	for (int i = 0; i < m_maxNum;i++)
 	{

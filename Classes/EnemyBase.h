@@ -22,7 +22,7 @@ public:
 
 	virtual void getHit(Armature* eff, float demage);
 	virtual void getDeBuff(DeBuff* debuff);
-	virtual void getBuff(Armature* eff, BuffType type, float time, float percent = 0);
+	virtual void getBuff(Buff* buff);
 	virtual void pauseAll();
 	virtual void resumeAll();
 	virtual void hpDown(float d);
@@ -34,6 +34,8 @@ public:
 	EnemyState getBaseState(){ return m_baseState; }
 	virtual void setLevel(Level l){ m_level = l; }
 	Level getLevel(){ return m_level; }
+	int getGoldNum(){ return m_goldNum; }
+	void setGoldNum(int g){ m_goldNum = g; }
 
 	void setName(const std::string & name){ m_name = name; }
 	std::string getName(){ return m_name; }
@@ -41,6 +43,10 @@ protected:
 	EnemyState m_baseState;
 	EnemyState m_preState;
 	Sprite* m_tomb;
+	int m_goldNum;
+
+	void eraseDebuff(DeBuff*);
+	void eraseBuff(Buff*);
 };
 
 

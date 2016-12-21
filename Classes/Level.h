@@ -8,5 +8,20 @@ enum Level
 	HIGH
 };
 
+enum ButtonState
+{
+	NORMAL,
+	CD,
+	DISABEL,
+};
+
+enum ButtonEffect
+{
+	NONE,
+	FROZEN,
+	SLEEP,
+	FORBIDDEN
+};
+
 
 #endif

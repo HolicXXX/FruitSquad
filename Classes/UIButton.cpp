@@ -20,6 +20,8 @@ bool UIButton::init(ButtonType type)
 		return false;
 	}
 	m_type = type;
+	m_callback = nullptr;
+	m_callback2 = nullptr;
 	initButton();
 	initListener();
 
@@ -100,7 +102,8 @@ void UIButton::initListener()
 			setNormal();
 			if (m_type == PAUSE || m_type == SPEED_1 || m_type == MENU_SOUND_ON || m_type == MENU_MUSIC_ON)
 			{
-				m_callback2();
+				if (m_callback2)
+					m_callback2();
 			}
 			else
 				m_callback();
@@ -169,6 +172,11 @@ void UIButton::initButton()
 	case MENU_RETURN:
 	{
 		m_name = "menu_return";
+	}
+		break;
+	case NEXT:
+	{
+		m_name = "menu_next";
 	}
 		break;
 	default:
@@ -241,6 +249,11 @@ void UIButton::setType(ButtonType t)
 	case MENU_RETURN:
 	{
 		m_name = "menu_return";
+	}
+	break;
+	case NEXT:
+	{
+		m_name = "menu_next";
 	}
 	break;
 	default:

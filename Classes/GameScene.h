@@ -6,8 +6,10 @@
 #include "HeroSelectLayer.h"
 #include "UIButton.h"
 #include "SkillButton.h"
+#include "ItemButton.h"
 #include "HPBottle.h"
 #include "GoldLabel.h"
+#include "SettlementLayer.h"
 
 class GameScene : public Layer
 {
@@ -15,6 +17,7 @@ public:
 	static Scene* createScene();
 	static GameScene* create();
 	virtual bool init();
+	virtual void onExit();
 
 	void pauseAll();
 	void resumeAll();
@@ -41,22 +44,35 @@ private:
 	float m_previewScale;
 	Size m_mapSize;
 	TMXTiledMap* m_map;
+	void cameraMove(Vec2 step);
 
 	HeroSelect* m_heroSelectLayer;
 	void initHeroSelect();
 
-	Layer* m_midLayer;
 	void initSelectMidLayer();
+	Layer* m_midLayer;//ui layer
+	void initUI();
+	//left top ui
+	UIButton* m_pause;
+	UIButton* m_speed;
+	void addMenuLayer();
+	UIButton* m_menu;
+	//right top ui
+	HPBottle* m_hp;
+
+	void getGold(Ref*);
+	GoldLabel* m_gold;
 
 	void startCallBack();
 
-	void initUI();
-	UIButton* m_pause;
-	UIButton* m_speed;
-	UIButton* m_menu;
-	void addMenuLayer();
-	HPBottle* m_hp;
-	GoldLabel* m_gold;
+	void initItems();
+	ItemButton* m_item;
+	void useItem(ItemType type);
+
+	void addDeathCount(Ref*);
+	int m_deathCount;
+	void callSettleMent();
+	SettlementLayer* m_settleMent;
 };
 
 
