@@ -1,6 +1,7 @@
 # FruitSquad
 My cocos2d-x Projects
-## Screanshots    
+
+## Summary    
 
 > 项目名称：萌果敢死队（单机版）   
 > 项目介绍：一款单机的Q版逆塔防游戏！在游戏中，玩家需要操作一群萌萌的水果战士，每个战士都有自己独特的技能，你来随意搭配，冲过
@@ -18,6 +19,7 @@ My cocos2d-x Projects
 > 项目要点：Cocos2D-X引擎的使用，TiledMap地图制作和使用，TexturePackerGUI工具的使用，CocoStudio序列帧动画的使用，UI界面的制作
 排布，碰撞检测，多种设计模式，Json文件的制作和读取使用，角色属性数据的设计，怪物的低级AI。  
 
+## Screenshots
 
 ![](images/1.png)
 ![](images/2.png)
